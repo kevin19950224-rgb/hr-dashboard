@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>HR Analytics Dashboard — Live</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: { extend: { fontFamily: { sans: ['DM Sans','sans-serif'], mono: ['DM Mono','monospace'] } } }
+}
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif}
+.kpi-card{transition:transform .18s ease}
+.kpi-card:hover{transform:translateY(-2px)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .35s ease forwards}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin 1s linear infinite}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:.25}}
+.pdot{animation:pdot 1.2s infinite}
+.pdot:nth-child(2){animation-delay:.2s}
+.pdot:nth-child(3){animation-delay:.4s}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:99px}
+.dark ::-webkit-scrollbar-thumb{background:#374151}
+.data-flash{animation:fadeUp .4s ease}
+
+/* ── Multi-select dropdown ── */
+.ms-wrap{position:relative;display:inline-block}
+.ms-btn{display:flex;align-items:center;gap:6px;height:34px;padding:0 10px 0 10px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#374151;font-size:11px;cursor:pointer;white-space:nowrap;user-select:none;transition:border-color .15s}
+.dark .ms-btn{border-color:#334155;background:#1e293b;color:#d1d5db}
+.ms-btn:hover{border-color:#a5b4fc}
+.ms-btn .ms-arrow{margin-left:2px;opacity:.5;transition:transform .2s}
+.ms-wrap.open .ms-arrow{transform:rotate(180deg)}
+.ms-count{background:#6366f1;color:#fff;border-radius:99px;font-size:9px;font-weight:600;padding:1px 5px;font-family:'DM Mono',monospace}
+.ms-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:180px;max-width:260px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:100;overflow:hidden}
+.dark .ms-panel{background:#1e293b;border-color:#334155;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.ms-wrap.open .ms-panel{display:block}
+.ms-search{width:100%;border:none;border-bottom:1px solid #f3f4f6;padding:8px 10px;font-size:11px;outline:none;background:transparent;color:#374151}
+.dark .ms-search{border-color:#334155;color:#d1d5db}
+.ms-list{max-height:200px;overflow-y:auto;padding:4px}
+.ms-item{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:11px;cursor:pointer;color:#374151;transition:background .1s}
+.dark .ms-item{color:#d1d5db}
+.ms-item:hover{background:#f3f4f6}
+.dark .ms-item:hover{background:#334155}
+.ms-item input[type=checkbox]{accent-color:#6366f1;width:13px;height:13px;flex-shrink:0}
+.ms-item.all-item{font-weight:600;border-bottom:1px solid #f3f4f6;margin-bottom:2px;padding-bottom:7px}
+.dark .ms-item.all-item{border-color:#334155}
+.ms-footer{padding:6px 8px;border-top:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center}
+.dark .ms-footer{border-color:#334155}
+.ms-clear{font-size:10px;color:#6366f1;cursor:pointer;text-decoration:underline;background:none;border:none;padding:0}
+.ms-apply{font-size:10px;background:#6366f1;color:#fff;border:none;border-radius:5px;padding:3px 8px;cursor:pointer;font-weight:500}
+.ms-apply:hover{background:#4f46e5}
+</style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-[#080d18] dark:text-gray-100 min-h-screen">
+
+<!-- ══ LOADING OVERLAY ══ -->
+<div id="overlay" class="fixed inset-0 z-50 bg-white dark:bg-[#080d18] flex flex-col items-center justify-center gap-4">
+  <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+  </div>
+  <p class="text-sm font-500 text-gray-700 dark:text-gray-300">Connecting to Google Sheets…</p>
+  <div class="flex gap-1.5">
+    <span class="pdot w-2 h-2 rounded-full bg-indigo-400 inline-block"></span>
+    <span class="pdot w-2 h-2 rounded-full bg-indigo-400 inline-block"></span>
+    <span class="pdot w-2 h-2 rounded-full bg-indigo-400 inline-block"></span>
+  </div>
+  <p id="overlay-msg" class="text-xs text-gray-400 dark:text-slate-500 font-mono">Fetching headcount data…</p>
+</div>
+
+<!-- ══ ERROR BANNER ══ -->
+<div id="err-banner" class="hidden fixed top-0 left-0 right-0 z-40 bg-rose-600 text-white text-xs font-mono px-6 py-2 flex items-center gap-3">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <span id="err-msg">Connection error</span>
+  <button onclick="document.getElementById('err-banner').classList.add('hidden')" class="ml-auto underline">Dismiss</button>
+</div>
+
+<!-- ══ TOP NAV ══ -->
+<header class="sticky top-0 z-30 bg-white/90 dark:bg-[#0d1424]/90 backdrop-blur border-b border-gray-100 dark:border-slate-800 px-5 py-3">
+  <div class="max-w-screen-2xl mx-auto flex items-center gap-3 flex-wrap">
+
+    <!-- Logo -->
+    <div class="flex items-center gap-2.5 flex-shrink-0">
+      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+      </div>
+      <div>
+        <p class="text-sm font-600 leading-none text-gray-900 dark:text-white">HR Analytics</p>
+        <p class="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5 font-mono">LIVE · GOOGLE SHEETS</p>
+      </div>
+    </div>
+
+    <!-- Sync status -->
+    <div id="sync-pill" class="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-800 rounded-full px-3 py-1 flex-shrink-0">
+      <span id="sync-dot" class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+      <span id="sync-label" class="text-[10px] font-mono text-gray-500 dark:text-slate-400">Connecting…</span>
+    </div>
+
+    <!-- FILTERS — multi-select dropdowns, built dynamically after data loads -->
+    <div class="flex flex-wrap items-center gap-2 flex-1" id="filter-bar">
+      <span class="text-xs text-gray-400 dark:text-slate-600 font-mono italic">Loading filters…</span>
+    </div>
+    </div>
+
+    <!-- Manual refresh + dark mode -->
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <button onclick="fetchAllSheets()" title="Refresh now" class="w-8 h-8 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+        <svg id="refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      </button>
+      <button onclick="toggleDark()" title="Toggle dark mode" class="w-8 h-8 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+        <svg id="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg id="icon-sun" class="hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-screen-2xl mx-auto px-5 py-6 space-y-6">
+
+  <!-- ── PANEL 1: KPI CARDS ── -->
+  <section>
+    <p class="text-[10px] font-mono font-500 text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-3">Workforce Summary</p>
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+
+      <div class="kpi-card bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-4">
+        <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2 leading-tight">Total Payroll</p>
+        <p id="kpi-payroll" class="text-lg font-600 text-gray-900 dark:text-white leading-tight">—</p>
+        <p class="text-[10px] mt-1.5 text-gray-400 dark:text-slate-500">Gross payroll amount</p>
+      </div>
+
+      <div class="kpi-card bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-4">
+        <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2 leading-tight">Avg Manpower Cost</p>
+        <p id="kpi-avg-mp" class="text-lg font-600 text-gray-900 dark:text-white leading-tight">—</p>
+        <p class="text-[10px] mt-1.5 text-gray-400 dark:text-slate-500">Per active headcount</p>
+      </div>
+
+      <div class="kpi-card bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-4">
+        <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2 leading-tight">Avg Cost / Category</p>
+        <p id="kpi-avg-cat" class="text-lg font-600 text-gray-900 dark:text-white leading-tight">—</p>
+        <p id="kpi-avg-cat-label" class="text-[10px] mt-1.5 text-gray-400 dark:text-slate-500 truncate">By category</p>
+      </div>
+
+      <div class="kpi-card bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-4">
+        <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2 leading-tight">Avg Cost / Job Grade</p>
+        <p id="kpi-avg-grade" class="text-lg font-600 text-gray-900 dark:text-white leading-tight">—</p>
+        <p id="kpi-avg-grade-label" class="text-[10px] mt-1.5 text-gray-400 dark:text-slate-500 truncate">By job grade</p>
+      </div>
+
+      <div class="kpi-card bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 rounded-xl p-4">
+        <p class="text-[10px] text-indigo-400 uppercase tracking-wider mb-2 leading-tight">Active Accounts</p>
+        <p id="kpi-active" class="text-lg font-600 text-indigo-700 dark:text-indigo-300 leading-tight">—</p>
+        <p class="text-[10px] mt-1.5 text-indigo-300 dark:text-indigo-500">Employees only</p>
+      </div>
+
+      <div class="kpi-card bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 rounded-xl p-4">
+        <p class="text-[10px] text-emerald-500 uppercase tracking-wider mb-2 leading-tight">New Hires</p>
+        <p id="kpi-hires" class="text-lg font-600 text-emerald-700 dark:text-emerald-300 leading-tight">—</p>
+        <p class="text-[10px] mt-1.5 text-emerald-400 dark:text-emerald-600">From hire file</p>
+      </div>
+
+      <div class="kpi-card bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/40 rounded-xl p-4">
+        <p class="text-[10px] text-rose-400 uppercase tracking-wider mb-2 leading-tight">Exited</p>
+        <p id="kpi-exited" class="text-lg font-600 text-rose-700 dark:text-rose-300 leading-tight">—</p>
+        <p class="text-[10px] mt-1.5 text-rose-300 dark:text-rose-600">From exit file</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── PANEL 2: COST CHARTS ── -->
+  <section>
+    <p class="text-[10px] font-mono font-500 text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-3">Cost Analysis</p>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+      <div class="bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="text-sm font-500 text-gray-900 dark:text-white">Total Payroll Cost</p>
+            <p class="text-[11px] text-gray-400 dark:text-slate-500">Bar chart with trend line overlay</p>
+          </div>
+          <span class="text-[10px] font-mono bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 px-2 py-1 rounded">BAR + TREND</span>
+        </div>
+        <div style="position:relative;height:240px;width:100%">
+          <canvas id="chart-trend" role="img" aria-label="Monthly payroll cost trend line chart"></canvas>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="text-sm font-500 text-gray-900 dark:text-white">Avg Cost per Headcount by Outlet</p>
+            <p class="text-[11px] text-gray-400 dark:text-slate-500">Average payroll per person, by outlet</p>
+          </div>
+          <span class="text-[10px] font-mono bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 px-2 py-1 rounded">BAR</span>
+        </div>
+        <div style="position:relative;height:280px;width:100%">
+          <canvas id="chart-outlet" role="img" aria-label="Average payroll cost per headcount by outlet bar chart"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── PANEL 3: DEMOGRAPHICS ── -->
+  <section>
+    <p class="text-[10px] font-mono font-500 text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-3">Demographics & Employment</p>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+      <div class="bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="text-sm font-500 text-gray-900 dark:text-white">Nationality Breakdown</p>
+            <p class="text-[11px] text-gray-400 dark:text-slate-500">Headcount by nationality</p>
+          </div>
+          <span class="text-[10px] font-mono bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 px-2 py-1 rounded">FLAGS</span>
+        </div>
+        <div id="nat-flags-grid" class="grid grid-cols-2 gap-3"></div>
+      </div>
+
+      <div class="bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="text-sm font-500 text-gray-900 dark:text-white">Citizenship Type</p>
+            <p class="text-[11px] text-gray-400 dark:text-slate-500">From Citizenship Description column</p>
+          </div>
+          <span class="text-[10px] font-mono bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 px-2 py-1 rounded">DONUT</span>
+        </div>
+        <div class="flex items-center gap-5">
+          <div style="position:relative;height:175px;width:175px;flex-shrink:0">
+            <canvas id="chart-cit" role="img" aria-label="Citizenship type donut chart"></canvas>
+          </div>
+          <div id="legend-cit" class="space-y-2 text-xs flex-1 min-w-0"></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+</main>
+
+<footer class="max-w-screen-2xl mx-auto px-5 py-4 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
+  <span class="text-[10px] font-mono text-gray-300 dark:text-slate-700">HR ANALYTICS · LIVE GOOGLE SHEETS INTEGRATION</span>
+  <div class="flex items-center gap-3">
+    <button onclick="toggleDebug()" class="text-[10px] font-mono text-gray-300 dark:text-slate-600 hover:text-indigo-400 transition-colors underline">🔧 Debug columns</button>
+    <span id="footer-sync" class="text-[10px] font-mono text-gray-300 dark:text-slate-700">Auto-refreshes every 60s</span>
+  </div>
+</footer>
+
+<!-- DEBUG PANEL -->
+<div id="debug-panel" class="hidden max-w-screen-2xl mx-auto px-5 pb-8">
+  <div class="bg-slate-900 border border-slate-700 rounded-xl p-5 font-mono text-xs">
+    <div class="flex items-center justify-between mb-4">
+      <p class="text-emerald-400 font-500">🔧 Column Debug — What your sheet actually sent</p>
+      <button onclick="toggleDebug()" class="text-slate-500 hover:text-white">✕ Close</button>
+    </div>
+    <p class="text-slate-400 mb-3">If values show RM 0, look for your actual cost column below. Auto-detected cost column: <span id="debug-cost-col" class="text-emerald-400 font-bold">detecting…</span></p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <p class="text-amber-400 mb-2">HC Raw File 2 — First row column headers:</p>
+        <div id="debug-hc-headers" class="text-slate-300 space-y-0.5 max-h-64 overflow-y-auto"></div>
+      </div>
+      <div>
+        <p class="text-amber-400 mb-2">HC Raw File 2 — First data row (sample values):</p>
+        <div id="debug-hc-sample" class="text-slate-300 space-y-0.5 max-h-64 overflow-y-auto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  CONFIG — Your Google Sheets credentials
+// ══════════════════════════════════════════
+const SHEET_ID      = '1S6IS_jM1yZo60dq8IUYYU24WqLS7JnGlMfVWUjIZ2TI';
+const API_KEY       = 'AIzaSyCfUDtFPcpGdCR4-mcL03K4NkUs70akayU';
+const CLAUDE_API_KEY = 'YOUR_CLAUDE_API_KEY_HERE'; // ← Paste your Anthropic API key here
+const TABS      = {
+  hc:    'HC Raw File 2',
+  hires: 'New Hire Raw File',
+  exits: 'Exit Raw File'
+};
+const REFRESH_MS = 60000; // auto-refresh every 60 seconds
+
+// ══════════════════════════════════════════
+//  GLOBAL STATE
+// ══════════════════════════════════════════
+let RAW = { hc: [], hires: [], exits: [] };
+let COST_COL = 'Sum'; // auto-detected after first fetch
+let CHARTS = {};
+let isDark = false;
+
+// ══════════════════════════════════════════
+//  DARK MODE
+// ══════════════════════════════════════════
+function toggleDark() {
+  isDark = !isDark;
+  document.documentElement.classList.toggle('dark', isDark);
+  document.getElementById('icon-moon').classList.toggle('hidden', isDark);
+  document.getElementById('icon-sun').classList.toggle('hidden', !isDark);
+  applyFilters();
+}
+
+// ══════════════════════════════════════════
+//  GOOGLE SHEETS FETCH
+// ══════════════════════════════════════════
+async function fetchSheet(tabName) {
+  const encoded = encodeURIComponent(tabName);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encoded}?key=${API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({error:{message:res.statusText}}));
+    throw new Error(err.error?.message || res.statusText);
+  }
+  const json = await res.json();
+  const rows = json.values || [];
+  if (rows.length < 2) return [];
+  const headers = rows[0].map(h => h.trim());
+  return rows.slice(1).map(row => {
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = (row[i] || '').trim(); });
+    return obj;
+  });
+}
+
+function setOverlayMsg(msg) {
+  document.getElementById('overlay-msg').textContent = msg;
+}
+
+async function fetchAllSheets() {
+  // Spin the refresh icon
+  const ri = document.getElementById('refresh-icon');
+  ri.classList.add('spin');
+  setSyncStatus('syncing');
+
+  try {
+    setOverlayMsg('Fetching headcount data…');
+    RAW.hc    = await fetchSheet(TABS.hc);
+    COST_COL  = detectCostColumn(RAW.hc);
+    console.log('Using cost column:', COST_COL);
+    setOverlayMsg('Fetching new hire records…');
+    RAW.hires = await fetchSheet(TABS.hires);
+    setOverlayMsg('Fetching exit records…');
+    RAW.exits = await fetchSheet(TABS.exits);
+
+    populateFilters();
+    applyFilters();
+    setSyncStatus('live');
+    document.getElementById('footer-sync').textContent = 'Last synced: ' + new Date().toLocaleTimeString('en-MY');
+    document.getElementById('overlay').style.display = 'none';
+
+  } catch(e) {
+    setSyncStatus('error');
+    showError('Could not connect to Google Sheets: ' + e.message + '. Check your API key and Sheet sharing settings.');
+    document.getElementById('overlay').style.display = 'none';
+    console.error(e);
+  } finally {
+    ri.classList.remove('spin');
+  }
+}
+
+// ══════════════════════════════════════════
+//  STATUS HELPERS
+// ══════════════════════════════════════════
+function setSyncStatus(state) {
+  const dot   = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  if (state === 'live')    { dot.className='w-1.5 h-1.5 rounded-full bg-emerald-400'; label.textContent='Live'; }
+  if (state === 'syncing') { dot.className='w-1.5 h-1.5 rounded-full bg-amber-400';   label.textContent='Syncing…'; }
+  if (state === 'error')   { dot.className='w-1.5 h-1.5 rounded-full bg-rose-400';    label.textContent='Error'; }
+}
+
+function showError(msg) {
+  document.getElementById('err-msg').textContent = msg;
+  document.getElementById('err-banner').classList.remove('hidden');
+}
+
+// ══════════════════════════════════════════
+//  PAYROLL MONTH PARSER
+//  Handles: "Dec-25", "Dec-2025", "Jan 2025",
+//           "2025-01", "01/2025", "December 2025"
+// ══════════════════════════════════════════
+const MONTH_NAMES = {
+  jan:'Jan', feb:'Feb', mar:'Mar', apr:'Apr', may:'May', jun:'Jun',
+  jul:'Jul', aug:'Aug', sep:'Sep', oct:'Oct', nov:'Nov', dec:'Dec',
+  january:'Jan', february:'Feb', march:'Mar', april:'Apr', june:'Jun',
+  july:'Jul', august:'Aug', september:'Sep', october:'Oct', november:'Nov', december:'Dec',
+  '01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun',
+  '07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'
+};
+
+function parsePayrollMonth(val) {
+  // Returns { year: '2025', month: 'Dec' } or nulls if unparseable
+  if (!val) return { year: null, month: null };
+  val = val.trim();
+
+  // Try "Dec-25" or "Dec-2025" or "Dec 25" or "Dec 2025"
+  const mAlpha = val.match(/^([A-Za-z]+)[\s\-\/](\d{2,4})$/);
+  if (mAlpha) {
+    const mKey = mAlpha[1].toLowerCase();
+    const yRaw = mAlpha[2];
+    const month = MONTH_NAMES[mKey] || null;
+    const year  = yRaw.length === 2 ? '20' + yRaw : yRaw;
+    return { year, month };
+  }
+
+  // Try "2025-01" or "2025/01"
+  const mNumYM = val.match(/^(\d{4})[\-\/](\d{1,2})$/);
+  if (mNumYM) {
+    return { year: mNumYM[1], month: MONTH_NAMES[mNumYM[2].padStart(2,'0')] || null };
+  }
+
+  // Try "01/2025" or "01-2025"
+  const mNumMY = val.match(/^(\d{1,2})[\-\/](\d{4})$/);
+  if (mNumMY) {
+    return { year: mNumMY[2], month: MONTH_NAMES[mNumMY[1].padStart(2,'0')] || null };
+  }
+
+  // Try "January 2025" or "January-2025"
+  const mFull = val.match(/^([A-Za-z]+)[\s\-](\d{4})$/);
+  if (mFull) {
+    return { year: mFull[2], month: MONTH_NAMES[mFull[1].toLowerCase()] || null };
+  }
+
+  return { year: null, month: null };
+}
+
+// ══════════════════════════════════════════
+//  POPULATE FILTER DROPDOWNS FROM REAL DATA
+// ══════════════════════════════════════════
+// ══════════════════════════════════════════
+//  MULTI-SELECT FILTER SYSTEM
+// ══════════════════════════════════════════
+const FILTER_STATE = { year:[], month:[], company:[], outlet:[], category:[], grade:[] };
+
+const FILTER_CFG = [
+  { id:'year',     label:'Year',       col:null },
+  { id:'month',    label:'Month',      col:null },
+  { id:'company',  label:'Company',    col:'Company Name' },
+  { id:'outlet',   label:'Outlet',     col:'Outlet' },
+  { id:'category', label:'Category',   col:'Category Name' },
+  { id:'grade',    label:'Job Grade',  col:'Job Grades' },
+];
+
+function buildMultiSelect(id, label, options) {
+  const wrap = document.createElement('div');
+  wrap.className = 'ms-wrap';
+  wrap.id = 'ms-' + id;
+  wrap.innerHTML = `
+    <div class="ms-btn" onclick="toggleMS('${id}')">
+      <span class="ms-label">${label}</span>
+      <span class="ms-count" id="ms-count-${id}" style="display:none">0</span>
+      <svg class="ms-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="ms-panel" id="ms-panel-${id}">
+      <input class="ms-search" placeholder="Search…" oninput="searchMS('${id}', this.value)" />
+      <div class="ms-list" id="ms-list-${id}">
+        <label class="ms-item all-item">
+          <input type="checkbox" id="ms-all-${id}" checked onchange="toggleAllMS('${id}', this.checked)" /> All
+        </label>
+        ${options.map(o => `
+          <label class="ms-item" data-val="${o}">
+            <input type="checkbox" value="${o}" onchange="itemChangedMS('${id}')" /> ${o}
+          </label>`).join('')}
+      </div>
+      <div class="ms-footer">
+        <button class="ms-clear" onclick="clearMS('${id}')">Clear</button>
+        <button class="ms-apply" onclick="applyMS('${id}')">Apply</button>
+      </div>
+    </div>`;
+  return wrap;
+}
+
+function toggleMS(id) {
+  const wrap = document.getElementById('ms-' + id);
+  const isOpen = wrap.classList.contains('open');
+  // Close all others
+  document.querySelectorAll('.ms-wrap.open').forEach(w => w.classList.remove('open'));
+  if (!isOpen) {
+    wrap.classList.add('open');
+    wrap.querySelector('.ms-search')?.focus();
+  }
+}
+
+function searchMS(id, q) {
+  const list = document.getElementById('ms-list-' + id);
+  list.querySelectorAll('.ms-item:not(.all-item)').forEach(item => {
+    const val = item.getAttribute('data-val') || '';
+    item.style.display = val.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function toggleAllMS(id, checked) {
+  const list = document.getElementById('ms-list-' + id);
+  list.querySelectorAll('input[type=checkbox]:not(#ms-all-' + id + ')').forEach(cb => {
+    if (!cb.closest('.ms-item').style.display || cb.closest('.ms-item').style.display !== 'none') {
+      cb.checked = checked;
+    }
+  });
+  FILTER_STATE[id] = checked ? [] : getCheckedVals(id);
+  updateMSCount(id);
+}
+
+function itemChangedMS(id) {
+  const vals = getCheckedVals(id);
+  const total = document.getElementById('ms-list-' + id).querySelectorAll('input[type=checkbox]:not(#ms-all-' + id + ')').length;
+  document.getElementById('ms-all-' + id).checked = (vals.length === total);
+  FILTER_STATE[id] = vals.length === total ? [] : vals;
+  updateMSCount(id);
+}
+
+function getCheckedVals(id) {
+  const list = document.getElementById('ms-list-' + id);
+  return [...list.querySelectorAll('input[type=checkbox]:not(#ms-all-' + id + ')')].filter(cb => cb.checked).map(cb => cb.value);
+}
+
+function clearMS(id) {
+  const list = document.getElementById('ms-list-' + id);
+  list.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
+  document.getElementById('ms-all-' + id).checked = false;
+  FILTER_STATE[id] = [];
+  updateMSCount(id);
+}
+
+function applyMS(id) {
+  FILTER_STATE[id] = getCheckedVals(id);
+  const total = document.getElementById('ms-list-' + id).querySelectorAll('input[type=checkbox]:not(#ms-all-' + id + ')').length;
+  if (FILTER_STATE[id].length === total) FILTER_STATE[id] = [];
+  updateMSCount(id);
+  toggleMS(id); // close panel
+  applyFilters();
+}
+
+function updateMSCount(id) {
+  const ct = document.getElementById('ms-count-' + id);
+  const n  = FILTER_STATE[id].length;
+  ct.textContent = n;
+  ct.style.display = n > 0 ? '' : 'none';
+  // Highlight button border if active
+  const btn = document.querySelector('#ms-' + id + ' .ms-btn');
+  if (btn) btn.style.borderColor = n > 0 ? '#6366f1' : '';
+}
+
+// Close panels when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.ms-wrap')) {
+    document.querySelectorAll('.ms-wrap.open').forEach(w => w.classList.remove('open'));
+  }
+});
+
+function uniqueVals(arr, col) {
+  return [...new Set(arr.map(r=>r[col]).filter(Boolean))].sort();
+}
+
+function populateFilters() {
+  // Dropdowns built from employee rows only (avoids blank entries from backcharge lines)
+  const hc = RAW.hc.filter(r => (r['Employee No'] || '').trim() !== '');
+
+  // Smart parse years AND months
+  const parsed = hc.map(r => parsePayrollMonth(r['Payroll Month']));
+  const years  = [...new Set(parsed.map(p=>p.year).filter(Boolean))].sort().reverse();
+  const MONTH_ORDER = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthsInData = [...new Set(parsed.map(p=>p.month).filter(Boolean))];
+  const months = MONTH_ORDER.filter(m => monthsInData.includes(m));
+
+  const optionMap = {
+    year:     years,
+    month:    months,
+    company:  uniqueVals(hc, 'Company Name'),
+    outlet:   uniqueVals(hc, 'Outlet'),
+    category: uniqueVals(hc, 'Category Name'),
+    grade:    uniqueVals(hc, 'Job Grades'),
+  };
+
+  const bar = document.getElementById('filter-bar');
+  bar.innerHTML = '';
+
+  FILTER_CFG.forEach(cfg => {
+    const opts = optionMap[cfg.id] || [];
+    const el = buildMultiSelect(cfg.id, cfg.label, opts);
+    bar.appendChild(el);
+    // Pre-check all (= no filter active)
+    const allCb = el.querySelector('#ms-all-' + cfg.id);
+    if (allCb) allCb.checked = true;
+    el.querySelectorAll(`#ms-list-${cfg.id} input[type=checkbox]:not(#ms-all-${cfg.id})`).forEach(cb => cb.checked = true);
+  });
+
+  // Reset filter state
+  Object.keys(FILTER_STATE).forEach(k => FILTER_STATE[k] = []);
+}
+
+
+// ══════════════════════════════════════════
+//  FILTER LOGIC (multi-select aware)
+// ══════════════════════════════════════════
+function getFilters() {
+  // Empty array = "all selected" (no filter applied)
+  return {
+    year:     FILTER_STATE.year,
+    month:    FILTER_STATE.month,
+    company:  FILTER_STATE.company,
+    outlet:   FILTER_STATE.outlet,
+    category: FILTER_STATE.category,
+    grade:    FILTER_STATE.grade,
+  };
+}
+
+function inFilter(arr, val) {
+  // arr empty = all selected; otherwise must be in list
+  return arr.length === 0 || arr.includes(val);
+}
+
+function matchRow(row, f) {
+  // Matches filters — does NOT exclude blank Employee No
+  // (blank rows are backcharge lines that still carry real cost)
+
+  if (f.year.length > 0 || f.month.length > 0) {
+    const { year, month } = parsePayrollMonth(row['Payroll Month']);
+    if (!inFilter(f.year,  year))  return false;
+    if (!inFilter(f.month, month)) return false;
+  }
+
+  if (!inFilter(f.company,  row['Company Name']))  return false;
+  if (!inFilter(f.outlet,   row['Outlet']))        return false;
+  if (!inFilter(f.category, row['Category Name'])) return false;
+  if (!inFilter(f.grade,    row['Job Grades']))    return false;
+
+  return true;
+}
+
+function hasEmployeeId(row) {
+  return (row['Employee No'] || '').trim() !== '';
+}
+
+function toNum(v) {
+  if (!v) return 0;
+  return parseFloat(String(v).replace(/[^0-9.\-]/g,'')) || 0;
+}
+
+// ══════════════════════════════════════════
+//  MAIN APPLY FILTERS → COMPUTE → RENDER
+// ══════════════════════════════════════════
+function applyFilters() {
+  if (!RAW.hc.length) return;
+  const f = getFilters();
+
+  // ALL matching rows — includes blank Employee No (backcharge lines carry real cost)
+  const filtered   = RAW.hc.filter(r => matchRow(r, f));
+
+  // Employee-only rows — for headcount KPI only (excludes blank Employee No duplicates)
+  const filteredHC = filtered.filter(r => hasEmployeeId(r));
+
+  // ── KPIs ──
+  const totalPayroll = filtered.reduce((s,r) => s + toNum(r[COST_COL]), 0);   // all rows incl. backcharge
+  const activeCount  = filteredHC.length;                                       // real employees only
+  const avgManpower  = activeCount ? totalPayroll / activeCount : 0;
+
+  // Avg cost per category
+  const catGroups = groupBy(filtered, 'Category Name');
+  const catAvgs   = Object.entries(catGroups).map(([k,rows]) => ({
+    name: k,
+    avg: rows.reduce((s,r)=>s+toNum(r[COST_COL]),0) / rows.length
+  }));
+  const topCat   = catAvgs.sort((a,b)=>b.avg-a.avg)[0];
+  const avgCat   = catAvgs.length ? catAvgs.reduce((s,c)=>s+c.avg,0)/catAvgs.length : 0;
+
+  // Avg cost per grade
+  const gradeGroups = groupBy(filtered, 'Job Grades');
+  const gradeAvgs   = Object.entries(gradeGroups).map(([k,rows]) => ({
+    name: k,
+    avg: rows.reduce((s,r)=>s+toNum(r[COST_COL]),0) / rows.length
+  }));
+  const topGrade = gradeAvgs.sort((a,b)=>b.avg-a.avg)[0];
+  const avgGrade = gradeAvgs.length ? gradeAvgs.reduce((s,g)=>s+g.avg,0)/gradeAvgs.length : 0;
+
+  // Hires & Exits — apply company and outlet filters
+  const hiresFiltered = RAW.hires.filter(r =>
+    inFilter(f.company, r['Company Name']) && inFilter(f.outlet, r['Outlet'])
+  );
+  const exitsFiltered = RAW.exits.filter(r =>
+    inFilter(f.company, r['Company Name']) && inFilter(f.outlet, r['Outlet'])
+  );
+
+  // ── Update KPI DOM ──
+  setKPI('kpi-payroll',    'RM ' + Math.round(totalPayroll).toLocaleString('en-MY'));
+  setKPI('kpi-avg-mp',     'RM ' + Math.round(avgManpower).toLocaleString('en-MY'));
+  setKPI('kpi-avg-cat',    'RM ' + Math.round(avgCat).toLocaleString('en-MY'));
+  setKPI('kpi-avg-grade',  'RM ' + Math.round(avgGrade).toLocaleString('en-MY'));
+  setKPI('kpi-active',     activeCount.toLocaleString());
+  setKPI('kpi-hires',      hiresFiltered.length.toLocaleString());
+  setKPI('kpi-exited',     exitsFiltered.length.toLocaleString());
+  document.getElementById('kpi-avg-cat-label').textContent   = topCat   ? topCat.name   + ' highest' : 'By category';
+  document.getElementById('kpi-avg-grade-label').textContent = topGrade ? topGrade.name + ' highest' : 'By grade';
+
+  // ── Charts ──
+  buildTrendChart(filtered, f);
+  buildOutletChart(filtered);
+  buildDonut('chart-cit', 'legend-cit', filtered, 'Citizenship Description', CIT_PALETTE);
+  buildNatFlags(filtered);
+}
+
+function setKPI(id, val) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = val; el.classList.add('data-flash'); setTimeout(()=>el.classList.remove('data-flash'),400); }
+}
+
+function groupBy(arr, key) {
+  return arr.reduce((acc, r) => {
+    const k = r[key] || 'Unknown';
+    if (!acc[k]) acc[k] = [];
+    acc[k].push(r);
+    return acc;
+  }, {});
+}
+
+// ══════════════════════════════════════════
+//  CHART BUILDERS
+// ══════════════════════════════════════════
+const MONTHS_ORDER = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const PALETTE_BAR  = ['#6366f1','#8b5cf6','#a78bfa','#c4b5fd','#ddd6fe','#ede9fe','#818cf8','#4f46e5'];
+const CIT_PALETTE  = ['#6366f1','#f43f5e','#f59e0b','#10b981','#0ea5e9','#8b5cf6'];
+
+function cdOpts() {
+  return {
+    tick: isDark ? '#6b7280' : '#9ca3af',
+    grid: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+    tooltip: {
+      backgroundColor: isDark ? '#1e293b' : '#fff',
+      borderColor: isDark ? '#334155' : '#e5e7eb',
+      borderWidth: 1,
+      titleColor: isDark ? '#e2e8f0' : '#111827',
+      bodyColor: isDark ? '#94a3b8' : '#6b7280'
+    }
+  };
+}
+
+// ── Simple linear regression for trend line ──
+function linearTrend(data) {
+  const n = data.length;
+  if (n < 2) return data;
+  const xs = data.map((_,i) => i);
+  const sumX  = xs.reduce((a,b)=>a+b,0);
+  const sumY  = data.reduce((a,b)=>a+b,0);
+  const sumXY = xs.reduce((s,x,i)=>s+x*data[i],0);
+  const sumX2 = xs.reduce((s,x)=>s+x*x,0);
+  const m = (n*sumXY - sumX*sumY) / (n*sumX2 - sumX*sumX);
+  const b = (sumY - m*sumX) / n;
+  return xs.map(x => Math.round(m*x + b));
+}
+
+function buildTrendChart(filtered, f) {
+  const byMonth = {};
+  MONTHS_ORDER.forEach(m => { byMonth[m] = 0; });
+  filtered.forEach(r => {
+    const { month: monthMatch } = parsePayrollMonth(r['Payroll Month']);
+    if (monthMatch) byMonth[monthMatch] += toNum(r[COST_COL]);
+  });
+
+  let labels, data;
+  if (f.month !== 'all') {
+    const outletGroup = groupBy(filtered, 'Outlet');
+    const sorted = Object.entries(outletGroup)
+      .map(([k,v])=>({k, v:v.reduce((s,r)=>s+toNum(r[COST_COL]),0)}))
+      .sort((a,b)=>b.v-a.v);
+    labels = sorted.map(x=>x.k);
+    data   = sorted.map(x=>x.v);
+  } else {
+    const activeMths = MONTHS_ORDER.filter(m => byMonth[m] > 0);
+    labels = activeMths.length ? activeMths : MONTHS_ORDER;
+    data   = labels.map(m => byMonth[m]);
+  }
+
+  const trendData = linearTrend(data);
+  const ctx = document.getElementById('chart-trend').getContext('2d');
+  if (CHARTS.trend) CHARTS.trend.destroy();
+  const cd = cdOpts();
+  const labelColor = isDark ? '#e2e8f0' : '#374151';
+  const maxVal = Math.max(...data, 1);
+
+  CHARTS.trend = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Total Cost (RM)',
+          data,
+          backgroundColor: data.map(v => {
+            const intensity = v / maxVal;
+            return `rgba(99,102,241,${0.35 + intensity * 0.55})`;
+          }),
+          borderRadius: 5,
+          borderSkipped: false,
+          order: 2,
+          datalabels: {
+            display: true,
+            anchor: 'end',
+            align: 'end',
+            offset: 2,
+            color: labelColor,
+            font: { size: 9, family: 'DM Mono', weight: '500' },
+            formatter: v => v > 0 ? 'RM '+(v/1000).toFixed(0)+'K' : ''
+          }
+        },
+        {
+          type: 'line',
+          label: 'Trend',
+          data: trendData,
+          borderColor: '#f43f5e',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [5, 4],
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          tension: 0.4,
+          order: 1,
+          datalabels: { display: false }
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'end',
+          labels: {
+            color: isDark ? '#9ca3af' : '#6b7280',
+            font: { size: 10 },
+            boxWidth: 20, boxHeight: 2,
+            usePointStyle: true, pointStyle: 'line'
+          }
+        },
+        tooltip: {
+          ...cd.tooltip,
+          callbacks: {
+            label: c => c.dataset.label === 'Trend'
+              ? ' Trend: RM ' + Math.round(c.raw).toLocaleString('en-MY')
+              : ' Total: RM '  + Math.round(c.raw).toLocaleString('en-MY')
+          }
+        },
+        datalabels: {} // global override — each dataset controls its own
+      },
+      scales: {
+        x: { ticks: { color: cd.tick, font:{size:10}, autoSkip:false, maxRotation:35 }, grid:{color:cd.grid} },
+        y: { ticks: { color: cd.tick, font:{size:10}, callback: v => 'RM '+(v/1000).toFixed(0)+'K' }, grid:{color:cd.grid} }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+function buildOutletChart(filtered) {
+  const outletGroup = groupBy(filtered, 'Outlet');
+  const sorted = Object.entries(outletGroup)
+    .map(([k,v]) => ({
+      o: k,
+      avg: Math.round(v.reduce((s,r)=>s+toNum(r[COST_COL]),0) / v.length),
+      count: v.filter(r=>hasEmployeeId(r)).length
+    }))
+    .sort((a,b) => b.avg - a.avg)
+    .slice(0, 10);
+
+  const labels = sorted.map(x => x.o);
+  const data   = sorted.map(x => x.avg);
+  const counts = sorted.map(x => x.count);
+  const ctx = document.getElementById('chart-outlet').getContext('2d');
+  if (CHARTS.outlet) CHARTS.outlet.destroy();
+  const cd = cdOpts();
+  const labelColor = isDark ? '#e2e8f0' : '#374151';
+
+  CHARTS.outlet = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Avg Cost / HC (RM)',
+        data,
+        backgroundColor: labels.map((_,i) => PALETTE_BAR[i % PALETTE_BAR.length]),
+        borderRadius: 4,
+        borderSkipped: false,
+        datalabels: {
+          display: true,
+          anchor: 'end',
+          align: 'end',
+          offset: 4,
+          color: labelColor,
+          font: { size: 9, family: 'DM Mono', weight: '500' },
+          formatter: (v, c) => {
+            const hc = counts[c.dataIndex];
+            return 'RM '+(v/1000).toFixed(1)+'K' + (hc ? '  ·  '+hc+' pax' : '');
+          }
+        }
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',                          // Outlet always on Y-axis
+      layout: { padding: { right: 100 } },     // room for data labels on the right
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...cd.tooltip,
+          callbacks: {
+            label: (c) => [
+              ' Avg Cost: RM ' + c.raw.toLocaleString('en-MY'),
+              ' Headcount: ' + counts[c.dataIndex] + ' pax'
+            ]
+          }
+        },
+        datalabels: {}
+      },
+      scales: {
+        x: {
+          ticks: { color: cd.tick, font:{size:10}, callback: v => 'RM '+(v/1000).toFixed(0)+'K' },
+          grid: { color: cd.grid }
+        },
+        y: {
+          ticks: { color: cd.tick, font:{size:10} },
+          grid: { display: false }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+// ══════════════════════════════════════════
+//  NATIONALITY FLAG INDICATORS
+// ══════════════════════════════════════════
+const NAT_FLAG_MAP = {
+  // key: lowercase nationality name → { code: ISO 3166-1 alpha-2, color, bg }
+  'malaysian':    { code: 'my', color: '#cc0001', bg: '#fff0f0' },
+  'malaysia':     { code: 'my', color: '#cc0001', bg: '#fff0f0' },
+  'bangladeshi':  { code: 'bd', color: '#006a4e', bg: '#f0fff6' },
+  'bangladesh':   { code: 'bd', color: '#006a4e', bg: '#f0fff6' },
+  'nepalese':     { code: 'np', color: '#003893', bg: '#f0f4ff' },
+  'nepali':       { code: 'np', color: '#003893', bg: '#f0f4ff' },
+  'nepal':        { code: 'np', color: '#003893', bg: '#f0f4ff' },
+  'myanmar':      { code: 'mm', color: '#34a853', bg: '#f0fff4' },
+  'burmese':      { code: 'mm', color: '#34a853', bg: '#f0fff4' },
+  'indonesian':   { code: 'id', color: '#ce1126', bg: '#fff0f0' },
+  'indonesia':    { code: 'id', color: '#ce1126', bg: '#fff0f0' },
+  'filipino':     { code: 'ph', color: '#0038a8', bg: '#f0f4ff' },
+  'philippines':  { code: 'ph', color: '#0038a8', bg: '#f0f4ff' },
+  'indian':       { code: 'in', color: '#ff9933', bg: '#fff8f0' },
+  'india':        { code: 'in', color: '#ff9933', bg: '#fff8f0' },
+  'pakistani':    { code: 'pk', color: '#01411c', bg: '#f0fff4' },
+  'pakistan':     { code: 'pk', color: '#01411c', bg: '#f0fff4' },
+  'thai':         { code: 'th', color: '#a51931', bg: '#fff0f0' },
+  'thailand':     { code: 'th', color: '#a51931', bg: '#fff0f0' },
+  'vietnamese':   { code: 'vn', color: '#da251d', bg: '#fff0f0' },
+  'vietnam':      { code: 'vn', color: '#da251d', bg: '#fff0f0' },
+  'cambodian':    { code: 'kh', color: '#032ea1', bg: '#f0f4ff' },
+  'cambodia':     { code: 'kh', color: '#032ea1', bg: '#f0f4ff' },
+  'chinese':      { code: 'cn', color: '#de2910', bg: '#fff0f0' },
+  'china':        { code: 'cn', color: '#de2910', bg: '#fff0f0' },
+  'sri lankan':   { code: 'lk', color: '#8d153a', bg: '#fff0f4' },
+  'sri lanka':    { code: 'lk', color: '#8d153a', bg: '#fff0f4' },
+  'singaporean':  { code: 'sg', color: '#ef3340', bg: '#fff0f0' },
+  'singapore':    { code: 'sg', color: '#ef3340', bg: '#fff0f0' },
+  'british':      { code: 'gb', color: '#012169', bg: '#f0f2ff' },
+  'japanese':     { code: 'jp', color: '#bc002d', bg: '#fff0f2' },
+  'korean':       { code: 'kr', color: '#003478', bg: '#f0f2ff' },
+  'south korean': { code: 'kr', color: '#003478', bg: '#f0f2ff' },
+  'australian':   { code: 'au', color: '#00008b', bg: '#f0f2ff' },
+  'american':     { code: 'us', color: '#b22234', bg: '#fff0f0' },
+};
+
+function getNatMeta(name) {
+  const key = (name || '').toLowerCase().trim();
+  if (NAT_FLAG_MAP[key]) return NAT_FLAG_MAP[key];
+  for (const [k, v] of Object.entries(NAT_FLAG_MAP)) {
+    if (key.includes(k) || k.includes(key)) return v;
+  }
+  return { code: null, color: '#6366f1', bg: '#f0f0ff' };
+}
+
+function flagImg(code, name) {
+  if (!code) {
+    // Fallback: a neutral globe SVG icon
+    return `<svg width="28" height="20" viewBox="0 0 28 20" style="flex-shrink:0;border-radius:2px;border:1px solid rgba(0,0,0,0.08)" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="20" fill="#e5e7eb"/><circle cx="14" cy="10" r="6" stroke="#9ca3af" stroke-width="1.2"/><line x1="14" y1="4" x2="14" y2="16" stroke="#9ca3af" stroke-width="1.2"/><ellipse cx="14" cy="10" rx="3" ry="6" stroke="#9ca3af" stroke-width="1.2"/><line x1="8" y1="10" x2="20" y2="10" stroke="#9ca3af" stroke-width="1.2"/></svg>`;
+  }
+  return `<img
+    src="https://flagcdn.com/w40/${code}.png"
+    srcset="https://flagcdn.com/w80/${code}.png 2x"
+    width="28" height="20"
+    alt="${name} flag"
+    style="flex-shrink:0;border-radius:2px;border:1px solid rgba(0,0,0,0.08);object-fit:cover;display:block"
+    onerror="this.style.display='none'"
+  />`;
+}
+
+function buildNatFlags(filtered) {
+  const empRows = filtered.filter(r => hasEmployeeId(r));
+  const groups  = groupBy(empRows.length ? empRows : filtered, 'Nationality Description');
+  const sorted  = Object.entries(groups).sort((a,b) => b[1].length - a[1].length);
+  const total   = empRows.length || sorted.reduce((s,[,v])=>s+v.length, 0);
+
+  const grid = document.getElementById('nat-flags-grid');
+  if (!grid) return;
+
+  if (!sorted.length) {
+    grid.innerHTML = '<p class="text-xs text-gray-400 col-span-2">No nationality data available.</p>';
+    return;
+  }
+
+  const cols = sorted.length <= 2 ? 1 : sorted.length <= 4 ? 2 : sorted.length <= 6 ? 3 : 4;
+  grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+
+  grid.innerHTML = sorted.map(([name, rows]) => {
+    const count    = rows.length;
+    const pct      = total ? Math.round(count / total * 100) : 0;
+    const meta     = getNatMeta(name);
+    const darkBg   = isDark ? 'rgba(255,255,255,0.04)' : meta.bg;
+    const borderC  = isDark ? 'rgba(255,255,255,0.08)' : meta.color + '33';
+    const textC    = isDark ? '#e2e8f0' : '#374151';
+    const numC     = isDark ? '#f1f5f9' : meta.color;
+    const subC     = isDark ? '#94a3b8' : '#9ca3af';
+    const trackC   = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
+    return `<div style="background:${darkBg};border:1px solid ${borderC};border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:7px;">
+      <div style="display:flex;align-items:center;gap:9px;">
+        ${flagImg(meta.code, name)}
+        <span style="font-size:11px;font-weight:500;color:${textC};line-height:1.3;word-break:break-word">${name}</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:5px;">
+        <span style="font-size:20px;font-weight:600;font-family:'DM Mono',monospace;color:${numC};line-height:1">${count}</span>
+        <span style="font-size:10px;color:${subC};font-family:'DM Mono',monospace">(${pct}%)</span>
+      </div>
+      <div style="height:3px;border-radius:99px;background:${trackC};">
+        <div style="height:100%;width:${pct}%;border-radius:99px;background:${meta.color};transition:width .4s ease;"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildDonut(canvasId, legendId, filtered, colName, palette) {
+  // Use employee-only rows for demographic counts
+  const empRows = filtered.filter(r => hasEmployeeId(r));
+  const groups  = groupBy(empRows.length ? empRows : filtered, colName);
+  const sorted  = Object.entries(groups).sort((a,b)=>b[1].length-a[1].length);
+  const labels  = sorted.map(([k])=>k);
+  const data    = sorted.map(([,v])=>v.length);
+  const colors  = labels.map((_,i)=>palette[i%palette.length]);
+  const total   = data.reduce((a,b)=>a+b,0);
+
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  if (CHARTS[canvasId]) CHARTS[canvasId].destroy();
+
+  CHARTS[canvasId] = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{
+      data, backgroundColor: colors,
+      borderWidth: 2,
+      borderColor: isDark ? '#0d1424' : '#ffffff',
+      hoverOffset: 6,
+      datalabels: {
+        display: ctx => {
+          // Only show label if segment is big enough to read
+          const pct = total ? ctx.dataset.data[ctx.dataIndex] / total * 100 : 0;
+          return pct >= 5;
+        },
+        color: '#ffffff',
+        font: { size: 9, weight: '600', family: 'DM Mono' },
+        formatter: (v) => {
+          const pct = total ? Math.round(v/total*100) : 0;
+          return pct + '%';
+        },
+        textAlign: 'center'
+      }
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '62%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: isDark ? '#1e293b' : '#fff',
+          borderColor: isDark ? '#334155' : '#e5e7eb',
+          borderWidth: 1,
+          titleColor: isDark ? '#e2e8f0' : '#111827',
+          bodyColor: isDark ? '#94a3b8' : '#6b7280',
+          callbacks: { label: c => ` ${c.label}: ${c.raw} (${total?Math.round(c.raw/total*100):0}%)` }
+        },
+        datalabels: {}
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+
+  document.getElementById(legendId).innerHTML = labels.slice(0,8).map((l,i) => {
+    const pct = total ? Math.round(data[i]/total*100) : 0;
+    return `<div class="flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <span style="width:9px;height:9px;border-radius:2px;background:${colors[i]};flex-shrink:0;display:inline-block"></span>
+        <span class="text-gray-600 dark:text-gray-400 truncate">${l}</span>
+      </div>
+      <span class="font-mono font-500 text-gray-800 dark:text-gray-200 flex-shrink-0">${data[i]} <span class="text-gray-400 dark:text-slate-500">(${pct}%)</span></span>
+    </div>`;
+  }).join('');
+}
+
+
+// ══════════════════════════════════════════
+//  DEBUG PANEL
+// ══════════════════════════════════════════
+function toggleDebug() {
+  const p = document.getElementById('debug-panel');
+  p.classList.toggle('hidden');
+  if (!p.classList.contains('hidden')) populateDebug();
+}
+
+function populateDebug() {
+  if (!RAW.hc.length) return;
+  const sampleRow = RAW.hc[0];
+  const headers   = Object.keys(sampleRow);
+  const costEl = document.getElementById('debug-cost-col');
+  if (costEl) costEl.textContent = COST_COL;
+
+  // Show all headers with index
+  document.getElementById('debug-hc-headers').innerHTML = headers.map((h, i) =>
+    `<div class="flex gap-2"><span class="text-slate-500 w-6 text-right">${i}</span><span class="${h===COST_COL?'text-emerald-400 font-bold':''}${h==='Sum'&&h!==COST_COL?' text-amber-400':''}">${h}${h===COST_COL?' ← cost column':''}</span></div>`
+  ).join('');
+
+  // Show sample values
+  document.getElementById('debug-hc-sample').innerHTML = headers.map((h, i) => {
+    const val = sampleRow[h] || '(empty)';
+    const isNumeric = !isNaN(val.replace(/,/g,'')) && val.trim() !== '';
+    return `<div class="flex gap-2"><span class="text-slate-500 w-6 text-right">${i}</span><span class="${isNumeric?'text-cyan-400':''}">${val}</span></div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  AUTO-DETECT COST COLUMN
+//  Tries 'Sum' first, then falls back to
+//  scanning for the first numeric-looking column
+// ══════════════════════════════════════════
+function detectCostColumn(rows) {
+  if (!rows.length) return 'Sum';
+  const candidates = ['Sum', 'sum', 'Total', 'Total Cost', 'Payroll Amount',
+                      'Invoice Amount', 'Current Basic Salary', 'Amount'];
+  const headers = Object.keys(rows[0]);
+
+  // 1. Try exact match from candidates list
+  for (const c of candidates) {
+    if (headers.includes(c)) {
+      const sample = rows.slice(0, 10).filter(r => toNum(r[c]) > 0);
+      if (sample.length > 0) { console.log('Cost column detected:', c); return c; }
+    }
+  }
+
+  // 2. Fall back: find first column where most values are numeric > 0
+  for (const h of headers) {
+    const nums = rows.slice(0, 20).filter(r => toNum(r[h]) > 100); // >100 to skip flags/codes
+    if (nums.length >= 5) { console.log('Cost column auto-detected:', h); return h; }
+  }
+
+  return 'Sum'; // last resort
+}
+
+
+setInterval(fetchAllSheets, REFRESH_MS);
+
+// ══════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', fetchAllSheets);
+</script>
+</body>
+</html>
