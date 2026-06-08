@@ -3,25 +3,42 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>HR Analytics Dashboard — Live</title>
+<title>Stellar Signature — Workforce Intelligence</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script>
 tailwind.config = {
   darkMode: 'class',
-  theme: { extend: { fontFamily: { sans: ['DM Sans','sans-serif'], mono: ['DM Mono','monospace'] } } }
+  theme: { extend: {
+    fontFamily: { sans: ['DM Sans','sans-serif'], mono: ['DM Mono','monospace'], display: ['Playfair Display','serif'] },
+    colors: {
+      gold:    { DEFAULT:'#C9A84C', light:'#E8C96A', dark:'#9A7530', muted:'#C9A84C22' },
+      stellar: { 950:'#0A0A0B', 900:'#111113', 800:'#18181C', 700:'#212127', 600:'#2A2A32', 500:'#38383F' }
+    }
+  }}
 }
 </script>
 <style>
+:root {
+  --gold:#C9A84C; --gold-light:#E8C96A; --gold-muted:rgba(201,168,76,0.12);
+  --gold-border:rgba(201,168,76,0.25); --gold-border-strong:rgba(201,168,76,0.5);
+  --s950:#0A0A0B; --s900:#111113; --s800:#18181C; --s700:#212127; --s600:#2A2A32; --s500:#38383F;
+  --text-primary:#F5F0E8; --text-secondary:#A89880; --text-muted:#6B6258;
+}
 *,*::before,*::after{box-sizing:border-box}
-body{font-family:'DM Sans',sans-serif}
-.kpi-card{transition:transform .18s ease}
-.kpi-card:hover{transform:translateY(-2px)}
-
+body{font-family:'DM Sans',sans-serif;background:var(--s950);color:var(--text-primary)}
+/* KPI card hover */
+.kpi-card{transition:transform .18s ease,box-shadow .18s ease}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(201,168,76,0.1)}
+/* Gold divider line */
+.gold-line{height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.35}
+/* Section labels */
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);opacity:.7}
+/* Animations */
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .fade-up{animation:fadeUp .35s ease forwards}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -30,211 +47,220 @@ body{font-family:'DM Sans',sans-serif}
 .pdot{animation:pdot 1.2s infinite}
 .pdot:nth-child(2){animation-delay:.2s}
 .pdot:nth-child(3){animation-delay:.4s}
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:99px}
-.dark ::-webkit-scrollbar-thumb{background:#374151}
 .data-flash{animation:fadeUp .4s ease}
-
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--s600);border-radius:99px}
+/* Star sparkle in logo */
+@keyframes sparkle{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
+.star-sparkle{animation:sparkle 2.4s ease-in-out infinite}
 /* ── Multi-select dropdown ── */
 .ms-wrap{position:relative;display:inline-block}
-.ms-btn{display:flex;align-items:center;gap:6px;height:34px;padding:0 10px 0 10px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#374151;font-size:11px;cursor:pointer;white-space:nowrap;user-select:none;transition:border-color .15s}
-.dark .ms-btn{border-color:#334155;background:#1e293b;color:#d1d5db}
-.ms-btn:hover{border-color:#a5b4fc}
+.ms-btn{display:flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:6px;border:1px solid var(--gold-border);background:var(--s700);color:var(--text-secondary);font-size:11px;cursor:pointer;white-space:nowrap;user-select:none;transition:border-color .15s,color .15s}
+.ms-btn:hover{border-color:var(--gold-border-strong);color:var(--gold)}
 .ms-btn .ms-arrow{margin-left:2px;opacity:.5;transition:transform .2s}
 .ms-wrap.open .ms-arrow{transform:rotate(180deg)}
-.ms-count{background:#6366f1;color:#fff;border-radius:99px;font-size:9px;font-weight:600;padding:1px 5px;font-family:'DM Mono',monospace}
-.ms-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:180px;max-width:260px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:100;overflow:hidden}
-.dark .ms-panel{background:#1e293b;border-color:#334155;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.ms-wrap.open .ms-btn{border-color:var(--gold-border-strong);color:var(--gold)}
+.ms-count{background:var(--gold);color:#111;border-radius:99px;font-size:9px;font-weight:700;padding:1px 6px;font-family:'DM Mono',monospace}
+.ms-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:190px;max-width:270px;background:var(--s800);border:1px solid var(--gold-border);border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.6);z-index:100;overflow:hidden}
 .ms-wrap.open .ms-panel{display:block}
-.ms-search{width:100%;border:none;border-bottom:1px solid #f3f4f6;padding:8px 10px;font-size:11px;outline:none;background:transparent;color:#374151}
-.dark .ms-search{border-color:#334155;color:#d1d5db}
+.ms-search{width:100%;border:none;border-bottom:1px solid var(--s600);padding:8px 10px;font-size:11px;outline:none;background:transparent;color:var(--text-primary)}
+.ms-search::placeholder{color:var(--text-muted)}
 .ms-list{max-height:200px;overflow-y:auto;padding:4px}
-.ms-item{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:11px;cursor:pointer;color:#374151;transition:background .1s}
-.dark .ms-item{color:#d1d5db}
-.ms-item:hover{background:#f3f4f6}
-.dark .ms-item:hover{background:#334155}
-.ms-item input[type=checkbox]{accent-color:#6366f1;width:13px;height:13px;flex-shrink:0}
-.ms-item.all-item{font-weight:600;border-bottom:1px solid #f3f4f6;margin-bottom:2px;padding-bottom:7px}
-.dark .ms-item.all-item{border-color:#334155}
-.ms-footer{padding:6px 8px;border-top:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center}
-.dark .ms-footer{border-color:#334155}
-.ms-clear{font-size:10px;color:#6366f1;cursor:pointer;text-decoration:underline;background:none;border:none;padding:0}
-.ms-apply{font-size:10px;background:#6366f1;color:#fff;border:none;border-radius:5px;padding:3px 8px;cursor:pointer;font-weight:500}
-.ms-apply:hover{background:#4f46e5}
+.ms-item{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:5px;font-size:11px;cursor:pointer;color:var(--text-secondary);transition:background .1s,color .1s}
+.ms-item:hover{background:var(--gold-muted);color:var(--gold-light)}
+.ms-item input[type=checkbox]{accent-color:var(--gold);width:13px;height:13px;flex-shrink:0}
+.ms-item.all-item{font-weight:600;border-bottom:1px solid var(--s600);margin-bottom:2px;padding-bottom:7px;color:var(--gold)}
+.ms-footer{padding:6px 8px;border-top:1px solid var(--s600);display:flex;justify-content:space-between;align-items:center}
+.ms-clear{font-size:10px;color:var(--text-muted);cursor:pointer;text-decoration:underline;background:none;border:none;padding:0}
+.ms-clear:hover{color:var(--gold)}
+.ms-apply{font-size:10px;background:var(--gold);color:#111;border:none;border-radius:5px;padding:3px 10px;cursor:pointer;font-weight:600}
+.ms-apply:hover{background:var(--gold-light)}
+/* Card base */
+.ss-card{background:var(--s800);border:1px solid var(--s600);border-radius:12px}
+.ss-card-gold{background:var(--s800);border:1px solid var(--gold-border);border-radius:12px}
+/* Sync pill */
+.sync-pill{background:var(--s700);border:1px solid var(--s500);border-radius:99px;padding:3px 10px;display:flex;align-items:center;gap:6px}
+/* Badge */
+.chart-badge{font-size:9px;font-family:'DM Mono',monospace;background:var(--s700);color:var(--text-muted);border:1px solid var(--s500);padding:2px 8px;border-radius:4px;letter-spacing:.08em}
 </style>
 </head>
-<body class="bg-gray-50 text-gray-800 dark:bg-[#080d18] dark:text-gray-100 min-h-screen">
+<body style="background:var(--s950);color:var(--text-primary)" class="min-h-screen">
 
 <!-- ══ LOADING OVERLAY ══ -->
-<div id="overlay" class="fixed inset-0 z-50 bg-white dark:bg-[#080d18] flex flex-col items-center justify-center gap-4">
-  <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+<div id="overlay" class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4" style="background:var(--s950)">
+  <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#C9A84C,#E8C96A);display:flex;align-items:center;justify-content:center">
+    <svg class="star-sparkle" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
   </div>
-  <p class="text-sm font-500 text-gray-700 dark:text-gray-300">Connecting to Google Sheets…</p>
+  <p style="font-family:'Playfair Display',serif;font-size:15px;color:var(--gold-light);letter-spacing:.04em">Stellar Signature</p>
   <div class="flex gap-1.5">
-    <span class="pdot w-2 h-2 rounded-full bg-indigo-400 inline-block"></span>
-    <span class="pdot w-2 h-2 rounded-full bg-indigo-400 inline-block"></span>
-    <span class="pdot w-2 h-2 rounded-full bg-indigo-400 inline-block"></span>
+    <span class="pdot" style="width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block"></span>
+    <span class="pdot" style="width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block"></span>
+    <span class="pdot" style="width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block"></span>
   </div>
-  <p id="overlay-msg" class="text-xs text-gray-400 dark:text-slate-500 font-mono">Fetching headcount data…</p>
+  <p id="overlay-msg" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted)">Fetching headcount data…</p>
 </div>
 
 <!-- ══ ERROR BANNER ══ -->
-<div id="err-banner" class="hidden fixed top-0 left-0 right-0 z-40 bg-rose-600 text-white text-xs font-mono px-6 py-2 flex items-center gap-3">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+<div id="err-banner" class="hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 px-6 py-2" style="background:#7c2020;font-size:11px;font-family:'DM Mono',monospace;color:#fecaca">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
   <span id="err-msg">Connection error</span>
-  <button onclick="document.getElementById('err-banner').classList.add('hidden')" class="ml-auto underline">Dismiss</button>
+  <button onclick="document.getElementById('err-banner').classList.add('hidden')" style="margin-left:auto;text-decoration:underline;background:none;border:none;color:inherit;cursor:pointer">Dismiss</button>
 </div>
 
 <!-- ══ TOP NAV ══ -->
-<header class="sticky top-0 z-30 bg-white/90 dark:bg-[#0d1424]/90 backdrop-blur border-b border-gray-100 dark:border-slate-800 px-5 py-3">
+<header class="sticky top-0 z-30 px-5 py-3" style="background:rgba(10,10,11,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--gold-border)">
   <div class="max-w-screen-2xl mx-auto flex items-center gap-3 flex-wrap">
 
     <!-- Logo -->
-    <div class="flex items-center gap-2.5 flex-shrink-0">
-      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#C9A84C,#E8C96A);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg class="star-sparkle" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       </div>
       <div>
-        <p class="text-sm font-600 leading-none text-gray-900 dark:text-white">HR Analytics</p>
-        <p class="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5 font-mono">LIVE · GOOGLE SHEETS</p>
+        <p style="font-family:'Playfair Display',serif;font-size:14px;color:var(--gold-light);line-height:1;letter-spacing:.03em">Stellar Signature</p>
+        <p style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted);margin-top:3px;letter-spacing:.1em">WORKFORCE INTELLIGENCE</p>
       </div>
     </div>
 
+    <!-- Gold divider -->
+    <div style="width:1px;height:28px;background:var(--gold-border);flex-shrink:0"></div>
+
     <!-- Sync status -->
-    <div id="sync-pill" class="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-800 rounded-full px-3 py-1 flex-shrink-0">
-      <span id="sync-dot" class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-      <span id="sync-label" class="text-[10px] font-mono text-gray-500 dark:text-slate-400">Connecting…</span>
+    <div class="sync-pill flex-shrink-0">
+      <span id="sync-dot" style="width:6px;height:6px;border-radius:50%;background:#555;flex-shrink:0;display:inline-block"></span>
+      <span id="sync-label" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text-muted)">Connecting…</span>
     </div>
 
-    <!-- FILTERS — multi-select dropdowns, built dynamically after data loads -->
+    <!-- FILTERS -->
     <div class="flex flex-wrap items-center gap-2 flex-1" id="filter-bar">
-      <span class="text-xs text-gray-400 dark:text-slate-600 font-mono italic">Loading filters…</span>
-    </div>
+      <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted);font-style:italic">Loading filters…</span>
     </div>
 
-    <!-- Manual refresh + dark mode -->
+    <!-- Refresh + theme buttons -->
     <div class="flex items-center gap-2 flex-shrink-0">
-      <button onclick="fetchAllSheets()" title="Refresh now" class="w-8 h-8 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
-        <svg id="refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-      </button>
-      <button onclick="toggleDark()" title="Toggle dark mode" class="w-8 h-8 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
-        <svg id="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <svg id="icon-sun" class="hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <button onclick="fetchAllSheets()" title="Refresh now" style="width:32px;height:32px;border-radius:6px;border:1px solid var(--gold-border);background:var(--s700);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);transition:border-color .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--gold-border)'">
+        <svg id="refresh-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
       </button>
     </div>
   </div>
 </header>
 
-<main class="max-w-screen-2xl mx-auto px-5 py-6 space-y-6">
+<main class="max-w-screen-2xl mx-auto px-5 py-6 space-y-7">
 
   <!-- ── PANEL 1: KPI CARDS ── -->
   <section>
-    <p class="text-[10px] font-mono font-500 text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-3">Workforce Summary</p>
+    <p class="section-label mb-3">Workforce Summary</p>
     <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
 
-      <div class="kpi-card bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-4">
-        <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2 leading-tight">Total Payroll</p>
-        <p id="kpi-payroll" class="text-lg font-600 text-gray-900 dark:text-white leading-tight">—</p>
-        <p class="text-[10px] mt-1.5 text-gray-400 dark:text-slate-500">Gross payroll amount</p>
+      <div class="kpi-card ss-card p-4">
+        <p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Total Payroll</p>
+        <p id="kpi-payroll" style="font-size:17px;font-weight:600;color:var(--gold-light);line-height:1.1">—</p>
+        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">Gross payroll</p>
       </div>
 
-      <div class="kpi-card bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-4">
-        <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2 leading-tight">Avg Manpower Cost</p>
-        <p id="kpi-avg-mp" class="text-lg font-600 text-gray-900 dark:text-white leading-tight">—</p>
-        <p class="text-[10px] mt-1.5 text-gray-400 dark:text-slate-500">Per active headcount</p>
+      <div class="kpi-card ss-card p-4">
+        <p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Avg Manpower</p>
+        <p id="kpi-avg-mp" style="font-size:17px;font-weight:600;color:var(--gold-light);line-height:1.1">—</p>
+        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">Per headcount</p>
       </div>
 
-      <div class="kpi-card bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-4">
-        <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2 leading-tight">Avg Cost / Category</p>
-        <p id="kpi-avg-cat" class="text-lg font-600 text-gray-900 dark:text-white leading-tight">—</p>
-        <p id="kpi-avg-cat-label" class="text-[10px] mt-1.5 text-gray-400 dark:text-slate-500 truncate">By category</p>
+      <div class="kpi-card ss-card p-4">
+        <p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Avg / Category</p>
+        <p id="kpi-avg-cat" style="font-size:17px;font-weight:600;color:var(--gold-light);line-height:1.1">—</p>
+        <p id="kpi-avg-cat-label" style="font-size:10px;margin-top:6px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">By category</p>
       </div>
 
-      <div class="kpi-card bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-4">
-        <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2 leading-tight">Avg Cost / Job Grade</p>
-        <p id="kpi-avg-grade" class="text-lg font-600 text-gray-900 dark:text-white leading-tight">—</p>
-        <p id="kpi-avg-grade-label" class="text-[10px] mt-1.5 text-gray-400 dark:text-slate-500 truncate">By job grade</p>
+      <div class="kpi-card ss-card p-4">
+        <p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Avg / Job Grade</p>
+        <p id="kpi-avg-grade" style="font-size:17px;font-weight:600;color:var(--gold-light);line-height:1.1">—</p>
+        <p id="kpi-avg-grade-label" style="font-size:10px;margin-top:6px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">By job grade</p>
       </div>
 
-      <div class="kpi-card bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 rounded-xl p-4">
-        <p class="text-[10px] text-indigo-400 uppercase tracking-wider mb-2 leading-tight">Active Accounts</p>
-        <p id="kpi-active" class="text-lg font-600 text-indigo-700 dark:text-indigo-300 leading-tight">—</p>
-        <p class="text-[10px] mt-1.5 text-indigo-300 dark:text-indigo-500">Employees only</p>
+      <div class="kpi-card p-4" style="background:var(--gold-muted);border:1px solid var(--gold-border);border-radius:12px">
+        <p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Active Accounts</p>
+        <p id="kpi-active" style="font-size:22px;font-weight:600;color:var(--gold-light);line-height:1.1;font-family:'Playfair Display',serif">—</p>
+        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">Employees only</p>
       </div>
 
-      <div class="kpi-card bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 rounded-xl p-4">
-        <p class="text-[10px] text-emerald-500 uppercase tracking-wider mb-2 leading-tight">New Hires</p>
-        <p id="kpi-hires" class="text-lg font-600 text-emerald-700 dark:text-emerald-300 leading-tight">—</p>
-        <p class="text-[10px] mt-1.5 text-emerald-400 dark:text-emerald-600">From hire file</p>
+      <div class="kpi-card p-4" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:12px">
+        <p style="font-size:9px;font-family:'DM Mono',monospace;color:#34d399;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">New Hires</p>
+        <p id="kpi-hires" style="font-size:22px;font-weight:600;color:#6ee7b7;line-height:1.1;font-family:'Playfair Display',serif">—</p>
+        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">From hire file</p>
       </div>
 
-      <div class="kpi-card bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/40 rounded-xl p-4">
-        <p class="text-[10px] text-rose-400 uppercase tracking-wider mb-2 leading-tight">Exited</p>
-        <p id="kpi-exited" class="text-lg font-600 text-rose-700 dark:text-rose-300 leading-tight">—</p>
-        <p class="text-[10px] mt-1.5 text-rose-300 dark:text-rose-600">From exit file</p>
+      <div class="kpi-card p-4" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px">
+        <p style="font-size:9px;font-family:'DM Mono',monospace;color:#f87171;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Exited</p>
+        <p id="kpi-exited" style="font-size:22px;font-weight:600;color:#fca5a5;line-height:1.1;font-family:'Playfair Display',serif">—</p>
+        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">From exit file</p>
       </div>
 
     </div>
   </section>
+
+  <div class="gold-line"></div>
 
   <!-- ── PANEL 2: COST CHARTS ── -->
   <section>
-    <p class="text-[10px] font-mono font-500 text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-3">Cost Analysis</p>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <p class="section-label mb-3">Cost Analysis</p>
+    <div class="flex flex-col gap-4">
 
-      <div class="bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-5">
+      <!-- Total Payroll — full width -->
+      <div class="ss-card p-5">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <p class="text-sm font-500 text-gray-900 dark:text-white">Total Payroll Cost</p>
-            <p class="text-[11px] text-gray-400 dark:text-slate-500">Bar chart with trend line overlay</p>
+            <p style="font-size:13px;font-weight:500;color:var(--text-primary)">Total Payroll Cost</p>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:2px">Bars · Trend line · Month-over-month change</p>
           </div>
-          <span class="text-[10px] font-mono bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 px-2 py-1 rounded">BAR + TREND</span>
+          <span class="chart-badge">BAR + MoM</span>
         </div>
-        <div style="position:relative;height:240px;width:100%">
-          <canvas id="chart-trend" role="img" aria-label="Monthly payroll cost trend line chart"></canvas>
+        <div style="position:relative;height:300px;width:100%">
+          <canvas id="chart-trend" role="img" aria-label="Monthly payroll cost trend chart"></canvas>
         </div>
       </div>
 
-      <div class="bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-5">
+      <!-- Outlet avg cost — full width -->
+      <div class="ss-card p-5">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <p class="text-sm font-500 text-gray-900 dark:text-white">Avg Cost per Headcount by Outlet</p>
-            <p class="text-[11px] text-gray-400 dark:text-slate-500">Average payroll per person, by outlet</p>
+            <p style="font-size:13px;font-weight:500;color:var(--text-primary)">Avg Cost per Headcount by Outlet</p>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:2px">Average payroll per person</p>
           </div>
-          <span class="text-[10px] font-mono bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 px-2 py-1 rounded">BAR</span>
+          <span class="chart-badge">BAR</span>
         </div>
-        <div style="position:relative;height:280px;width:100%">
-          <canvas id="chart-outlet" role="img" aria-label="Average payroll cost per headcount by outlet bar chart"></canvas>
+        <div style="position:relative;height:300px;width:100%">
+          <canvas id="chart-outlet" role="img" aria-label="Average payroll cost by outlet"></canvas>
         </div>
       </div>
 
     </div>
   </section>
 
+  <div class="gold-line"></div>
+
   <!-- ── PANEL 3: DEMOGRAPHICS ── -->
   <section>
-    <p class="text-[10px] font-mono font-500 text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-3">Demographics & Employment</p>
+    <p class="section-label mb-3">Demographics & Employment</p>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-      <div class="bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-5">
+      <div class="ss-card p-5">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <p class="text-sm font-500 text-gray-900 dark:text-white">Nationality Breakdown</p>
-            <p class="text-[11px] text-gray-400 dark:text-slate-500">Headcount by nationality</p>
+            <p style="font-size:13px;font-weight:500;color:var(--text-primary)">Nationality Breakdown</p>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:2px">Headcount by nationality</p>
           </div>
-          <span class="text-[10px] font-mono bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 px-2 py-1 rounded">FLAGS</span>
+          <span class="chart-badge">FLAGS</span>
         </div>
         <div id="nat-flags-grid" class="grid grid-cols-2 gap-3"></div>
       </div>
 
-      <div class="bg-white dark:bg-[#0d1424] border border-gray-100 dark:border-slate-800 rounded-xl p-5">
+      <div class="ss-card p-5">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <p class="text-sm font-500 text-gray-900 dark:text-white">Citizenship Type</p>
-            <p class="text-[11px] text-gray-400 dark:text-slate-500">From Citizenship Description column</p>
+            <p style="font-size:13px;font-weight:500;color:var(--text-primary)">Citizenship Type</p>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:2px">From Citizenship Description column</p>
           </div>
-          <span class="text-[10px] font-mono bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 px-2 py-1 rounded">DONUT</span>
+          <span class="chart-badge">DONUT</span>
         </div>
         <div class="flex items-center gap-5">
           <div style="position:relative;height:175px;width:175px;flex-shrink:0">
@@ -247,25 +273,27 @@ body{font-family:'DM Sans',sans-serif}
     </div>
   </section>
 
-
 </main>
 
-<footer class="max-w-screen-2xl mx-auto px-5 py-4 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
-  <span class="text-[10px] font-mono text-gray-300 dark:text-slate-700">HR ANALYTICS · LIVE GOOGLE SHEETS INTEGRATION</span>
+<footer class="max-w-screen-2xl mx-auto px-5 py-4 flex items-center justify-between" style="border-top:1px solid var(--gold-border)">
+  <div class="flex items-center gap-2">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text-muted)">STELLAR SIGNATURE · WORKFORCE INTELLIGENCE</span>
+  </div>
   <div class="flex items-center gap-3">
-    <button onclick="toggleDebug()" class="text-[10px] font-mono text-gray-300 dark:text-slate-600 hover:text-indigo-400 transition-colors underline">🔧 Debug columns</button>
-    <span id="footer-sync" class="text-[10px] font-mono text-gray-300 dark:text-slate-700">Auto-refreshes every 60s</span>
+    <button onclick="toggleDebug()" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text-muted);background:none;border:none;cursor:pointer;text-decoration:underline">🔧 Debug columns</button>
+    <span id="footer-sync" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text-muted)">Auto-refreshes every 60s</span>
   </div>
 </footer>
 
 <!-- DEBUG PANEL -->
 <div id="debug-panel" class="hidden max-w-screen-2xl mx-auto px-5 pb-8">
-  <div class="bg-slate-900 border border-slate-700 rounded-xl p-5 font-mono text-xs">
-    <div class="flex items-center justify-between mb-4">
-      <p class="text-emerald-400 font-500">🔧 Column Debug — What your sheet actually sent</p>
-      <button onclick="toggleDebug()" class="text-slate-500 hover:text-white">✕ Close</button>
+  <div style="background:var(--s800);border:1px solid var(--gold-border);border-radius:12px;padding:20px;font-family:'DM Mono',monospace;font-size:11px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <p style="color:var(--gold);font-weight:600">🔧 Column Debug — What your sheet actually sent</p>
+      <button onclick="toggleDebug()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px">✕</button>
     </div>
-    <p class="text-slate-400 mb-3">If values show RM 0, look for your actual cost column below. Auto-detected cost column: <span id="debug-cost-col" class="text-emerald-400 font-bold">detecting…</span></p>
+    <p style="color:var(--text-muted);margin-bottom:12px">Auto-detected cost column: <span id="debug-cost-col" style="color:var(--gold-light);font-weight:700">detecting…</span></p>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <p class="text-amber-400 mb-2">HC Raw File 2 — First row column headers:</p>
@@ -291,7 +319,61 @@ const TABS      = {
   hires: 'New Hire Raw File',
   exits: 'Exit Raw File'
 };
-const REFRESH_MS = 60000; // auto-refresh every 60 seconds
+// ══════════════════════════════════════════
+//  SMART SYNC SCHEDULER
+//  Syncs once at 6:00am KL time (UTC+8) daily.
+//  Also syncs immediately if no sync has happened today yet.
+//  Manual refresh button always forces a sync.
+// ══════════════════════════════════════════
+const KL_OFFSET_MS = 8 * 60 * 60 * 1000; // UTC+8
+
+function getKLDate() {
+  return new Date(Date.now() + KL_OFFSET_MS);
+}
+
+function todayKLString() {
+  const d = getKLDate();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+
+function hasAlreadySyncedToday() {
+  try {
+    return localStorage.getItem('ss_last_sync_date') === todayKLString();
+  } catch(e) { return false; }
+}
+
+function markSyncedToday() {
+  try { localStorage.setItem('ss_last_sync_date', todayKLString()); } catch(e) {}
+}
+
+function msUntilNext6amKL() {
+  const now = getKLDate();
+  const next6am = new Date(Date.UTC(
+    now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), // KL date
+    6 - 8 + 24, 0, 0, 0 // 6am KL = 22:00 UTC previous day... simpler:
+  ));
+  // Build next 6am KL as a UTC timestamp
+  const klNowMs   = Date.now() + KL_OFFSET_MS;
+  const klMidnight = klNowMs - (klNowMs % 86400000); // floor to midnight UTC = midnight KL is offset
+  const kl6amToday = klMidnight + 6 * 3600 * 1000;   // 6am in KL milliseconds (relative)
+  const utc6amToday = kl6amToday - KL_OFFSET_MS;      // convert back to UTC
+  const utc6amTomorrow = utc6amToday + 86400000;
+  const msUntil = Date.now() < utc6amToday ? utc6amToday - Date.now() : utc6amTomorrow - Date.now();
+  return msUntil;
+}
+
+function scheduleNextSync() {
+  const ms = msUntilNext6amKL();
+  const hh = Math.floor(ms / 3600000);
+  const mm = Math.floor((ms % 3600000) / 60000);
+  console.log(`Next auto-sync in ${hh}h ${mm}m (6:00am KL)`);
+  document.getElementById('footer-sync').textContent = `Next sync: 6:00am KL (~${hh}h ${mm}m)`;
+  setTimeout(async () => {
+    await fetchAllSheets();
+    markSyncedToday();
+    scheduleNextSync(); // schedule the next day's sync
+  }, ms);
+}
 
 // ══════════════════════════════════════════
 //  GLOBAL STATE
@@ -299,18 +381,10 @@ const REFRESH_MS = 60000; // auto-refresh every 60 seconds
 let RAW = { hc: [], hires: [], exits: [] };
 let COST_COL = 'Sum'; // auto-detected after first fetch
 let CHARTS = {};
-let isDark = false;
+let isDark = true; // Stellar Signature always uses the premium dark theme
 
-// ══════════════════════════════════════════
-//  DARK MODE
-// ══════════════════════════════════════════
-function toggleDark() {
-  isDark = !isDark;
-  document.documentElement.classList.toggle('dark', isDark);
-  document.getElementById('icon-moon').classList.toggle('hidden', isDark);
-  document.getElementById('icon-sun').classList.toggle('hidden', !isDark);
-  applyFilters();
-}
+// Design is always Stellar Signature dark — no toggle needed
+
 
 // ══════════════════════════════════════════
 //  GOOGLE SHEETS FETCH
@@ -357,7 +431,7 @@ async function fetchAllSheets() {
     populateFilters();
     applyFilters();
     setSyncStatus('live');
-    document.getElementById('footer-sync').textContent = 'Last synced: ' + new Date().toLocaleTimeString('en-MY');
+    document.getElementById('footer-sync').textContent = 'Last synced: ' + new Date().toLocaleTimeString('en-MY', {timeZone:'Asia/Kuala_Lumpur', hour:'2-digit', minute:'2-digit'}) + ' KL';
     document.getElementById('overlay').style.display = 'none';
 
   } catch(e) {
@@ -728,21 +802,29 @@ function groupBy(arr, key) {
 //  CHART BUILDERS
 // ══════════════════════════════════════════
 const MONTHS_ORDER = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const PALETTE_BAR  = ['#6366f1','#8b5cf6','#a78bfa','#c4b5fd','#ddd6fe','#ede9fe','#818cf8','#4f46e5'];
-const CIT_PALETTE  = ['#6366f1','#f43f5e','#f59e0b','#10b981','#0ea5e9','#8b5cf6'];
+const PALETTE_BAR  = ['#C9A84C','#E8C96A','#9A7530','#D4B060','#B8943C','#F0D878','#8A6520','#EAC050'];
+const CIT_PALETTE  = ['#C9A84C','#E8903A','#D4605A','#8A9A4C','#4A8A9A','#9A6AC9'];
 
 function cdOpts() {
   return {
-    tick: isDark ? '#6b7280' : '#9ca3af',
-    grid: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+    tick: '#6B6258',
+    grid: 'rgba(201,168,76,0.06)',
     tooltip: {
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      borderColor: isDark ? '#334155' : '#e5e7eb',
+      backgroundColor: '#18181C',
+      borderColor: 'rgba(201,168,76,0.3)',
       borderWidth: 1,
-      titleColor: isDark ? '#e2e8f0' : '#111827',
-      bodyColor: isDark ? '#94a3b8' : '#6b7280'
+      titleColor: '#E8C96A',
+      bodyColor: '#A89880'
     }
   };
+}
+
+function setSyncStatus(state) {
+  const dot   = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  if (state === 'live')    { dot.style.background='#C9A84C'; label.textContent='Live'; }
+  if (state === 'syncing') { dot.style.background='#E8903A'; label.textContent='Syncing…'; }
+  if (state === 'error')   { dot.style.background='#ef4444'; label.textContent='Error'; }
 }
 
 // ── Simple linear regression for trend line ──
@@ -760,33 +842,135 @@ function linearTrend(data) {
 }
 
 function buildTrendChart(filtered, f) {
-  const byMonth = {};
-  MONTHS_ORDER.forEach(m => { byMonth[m] = 0; });
-  filtered.forEach(r => {
-    const { month: monthMatch } = parsePayrollMonth(r['Payroll Month']);
-    if (monthMatch) byMonth[monthMatch] += toNum(r[COST_COL]);
-  });
+  const MONTH_NUM = { Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',
+                      Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12' };
+  const MONTH_NAME = { '01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun',
+                       '07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec' };
 
-  let labels, data;
-  if (f.month !== 'all') {
-    const outletGroup = groupBy(filtered, 'Outlet');
-    const sorted = Object.entries(outletGroup)
-      .map(([k,v])=>({k, v:v.reduce((s,r)=>s+toNum(r[COST_COL]),0)}))
-      .sort((a,b)=>b.v-a.v);
-    labels = sorted.map(x=>x.k);
-    data   = sorted.map(x=>x.v);
-  } else {
-    const activeMths = MONTHS_ORDER.filter(m => byMonth[m] > 0);
-    labels = activeMths.length ? activeMths : MONTHS_ORDER;
-    data   = labels.map(m => byMonth[m]);
-  }
-
-  const trendData = linearTrend(data);
   const ctx = document.getElementById('chart-trend').getContext('2d');
   if (CHARTS.trend) CHARTS.trend.destroy();
   const cd = cdOpts();
-  const labelColor = isDark ? '#e2e8f0' : '#374151';
+
+  const monthsSelected = f.month && f.month.length > 0;
+
+  // ── MODE A: Month(s) selected → outlets on X-axis, one bar series per month ──
+  if (monthsSelected) {
+    // Collect all outlets with data
+    const outletSet = [...new Set(filtered.map(r => r['Outlet']).filter(Boolean))].sort();
+
+    // For each selected month, compute per-outlet costs
+    // Re-filter from ALL hc data per month to get proper month slices
+    const selectedMonths = f.month; // array of month names e.g. ['Jan','Feb']
+
+    // Build datasets — one per selected month, bars side by side per outlet
+    const monthColors = [
+      'rgba(201,168,76,0.8)','rgba(232,201,106,0.8)','rgba(232,144,58,0.8)',
+      'rgba(125,211,200,0.8)','rgba(154,117,48,0.8)','rgba(212,176,96,0.8)'
+    ];
+    const monthBorders = ['#C9A84C','#E8C96A','#E8903A','#7DD3C8','#9A7530','#D4B060'];
+
+    const datasets = selectedMonths.map((mon, idx) => {
+      const monRows = filtered.filter(r => {
+        const { month } = parsePayrollMonth(r['Payroll Month']);
+        return month === mon;
+      });
+      const outletCosts = outletSet.map(outlet =>
+        monRows.filter(r => r['Outlet'] === outlet)
+               .reduce((s, r) => s + toNum(r[COST_COL]), 0)
+      );
+      return {
+        type: 'bar',
+        label: mon,
+        data: outletCosts,
+        backgroundColor: monthColors[idx % monthColors.length],
+        borderColor: monthBorders[idx % monthBorders.length],
+        borderWidth: 1,
+        borderRadius: 4,
+        borderSkipped: false,
+        datalabels: {
+          display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+          anchor: 'end',
+          align: 'end',
+          offset: 2,
+          color: '#A89880',
+          font: { size: 8, family: 'DM Mono', weight: '500' },
+          formatter: v => v > 0 ? 'RM '+(v/1000).toFixed(0)+'K' : ''
+        }
+      };
+    });
+
+    CHARTS.trend = new Chart(ctx, {
+      data: { labels: outletSet, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            align: 'end',
+            labels: { color: '#A89880', font: { size: 10 }, boxWidth: 12, boxHeight: 12, padding: 12 }
+          },
+          tooltip: {
+            ...cd.tooltip,
+            callbacks: {
+              label: c => ` ${c.dataset.label}: RM ${Math.round(c.raw).toLocaleString('en-MY')}`
+            }
+          },
+          datalabels: {}
+        },
+        scales: {
+          x: {
+            ticks: { color: cd.tick, font:{size:9}, maxRotation: 40 },
+            grid: { color: cd.grid },
+            title: {
+              display: true,
+              text: 'Outlet — ' + selectedMonths.join(' vs '),
+              color: '#A89880',
+              font: { size: 9, family: 'DM Mono' }
+            }
+          },
+          y: {
+            ticks: { color: cd.tick, font:{size:9}, callback: v => 'RM '+(v/1000).toFixed(0)+'K' },
+            grid: { color: cd.grid }
+          }
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+    return;
+  }
+
+  // ── MODE B: No month filter → full timeline, bars + trend + MoM ──
+  const byYearMonth = {};
+  filtered.forEach(r => {
+    const { year, month } = parsePayrollMonth(r['Payroll Month']);
+    if (!year || !month) return;
+    const key = `${year}-${MONTH_NUM[month]}`;
+    byYearMonth[key] = (byYearMonth[key] || 0) + toNum(r[COST_COL]);
+  });
+
+  const sortedKeys = Object.keys(byYearMonth).sort();
+  const labels = sortedKeys.map(k => {
+    const [yr, mn] = k.split('-');
+    return `${MONTH_NAME[mn]} ${yr}`;
+  });
+  const data = sortedKeys.map(k => byYearMonth[k]);
+
+  // Auto-size: wider when many months (min 300px, grows with data points)
+  const trendHeight = Math.max(300, Math.min(420, sortedKeys.length * 22));
+  const trendContainer = document.getElementById('chart-trend').parentElement;
+  if (trendContainer) trendContainer.style.height = trendHeight + 'px';
+
+  const trendData = linearTrend(data);
+  const momData = data.map((v, i) => {
+    if (i === 0 || data[i-1] === 0) return null;
+    return Math.round(v - data[i-1]);
+  });
+
   const maxVal = Math.max(...data, 1);
+  const labelCol = '#A89880';
 
   CHARTS.trend = new Chart(ctx, {
     data: {
@@ -794,21 +978,19 @@ function buildTrendChart(filtered, f) {
       datasets: [
         {
           type: 'bar',
-          label: 'Total Cost (RM)',
+          label: 'Payroll Cost',
           data,
-          backgroundColor: data.map(v => {
-            const intensity = v / maxVal;
-            return `rgba(99,102,241,${0.35 + intensity * 0.55})`;
-          }),
+          backgroundColor: data.map(v => `rgba(201,168,76,${0.3 + (v/maxVal)*0.65})`),
+          borderColor:      data.map(v => `rgba(201,168,76,${0.5 + (v/maxVal)*0.5})`),
+          borderWidth: 1,
           borderRadius: 5,
           borderSkipped: false,
-          order: 2,
+          yAxisID: 'y',
+          order: 3,
           datalabels: {
             display: true,
-            anchor: 'end',
-            align: 'end',
-            offset: 2,
-            color: labelColor,
+            anchor: 'end', align: 'end', offset: 2,
+            color: labelCol,
             font: { size: 9, family: 'DM Mono', weight: '500' },
             formatter: v => v > 0 ? 'RM '+(v/1000).toFixed(0)+'K' : ''
           }
@@ -817,45 +999,87 @@ function buildTrendChart(filtered, f) {
           type: 'line',
           label: 'Trend',
           data: trendData,
-          borderColor: '#f43f5e',
+          borderColor: '#E8903A',
           backgroundColor: 'transparent',
           borderWidth: 2,
           borderDash: [5, 4],
           pointRadius: 0,
           pointHoverRadius: 4,
           tension: 0.4,
-          order: 1,
+          yAxisID: 'y',
+          order: 2,
           datalabels: { display: false }
+        },
+        {
+          type: 'line',
+          label: 'MoM Change',
+          data: momData,
+          borderColor: '#7DD3C8',
+          backgroundColor: 'rgba(125,211,200,0.08)',
+          borderWidth: 1.5,
+          pointBackgroundColor: momData.map(v => v === null ? 'transparent' : v >= 0 ? '#6ee7b7' : '#f87171'),
+          pointBorderColor: 'transparent',
+          pointRadius: momData.map(v => v === null ? 0 : 4),
+          pointHoverRadius: 6,
+          tension: 0.4,
+          fill: false,
+          yAxisID: 'y2',
+          order: 1,
+          datalabels: {
+            display: ctx => { const v = ctx.dataset.data[ctx.dataIndex]; return v !== null && v !== 0; },
+            anchor: 'top', align: 'top', offset: 2,
+            color: ctx => ctx.dataset.data[ctx.dataIndex] >= 0 ? '#6ee7b7' : '#f87171',
+            font: { size: 8, family: 'DM Mono', weight: '600' },
+            formatter: v => v === null ? '' : (v >= 0 ? '+' : '') + (v/1000).toFixed(1) + 'K'
+          }
         }
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: {
           display: true,
           position: 'top',
           align: 'end',
-          labels: {
-            color: isDark ? '#9ca3af' : '#6b7280',
-            font: { size: 10 },
-            boxWidth: 20, boxHeight: 2,
-            usePointStyle: true, pointStyle: 'line'
-          }
+          labels: { color: '#A89880', font: { size: 10 }, boxWidth: 20, boxHeight: 2,
+                    usePointStyle: true, pointStyle: 'line', padding: 14 }
         },
         tooltip: {
           ...cd.tooltip,
           callbacks: {
-            label: c => c.dataset.label === 'Trend'
-              ? ' Trend: RM ' + Math.round(c.raw).toLocaleString('en-MY')
-              : ' Total: RM '  + Math.round(c.raw).toLocaleString('en-MY')
+            label: c => {
+              if (c.dataset.label === 'Trend') return ' Trend: RM ' + Math.round(c.raw).toLocaleString('en-MY');
+              if (c.dataset.label === 'MoM Change') {
+                if (c.raw === null) return null;
+                return ` MoM: ${c.raw >= 0 ? '+' : ''}RM ${Math.abs(Math.round(c.raw)).toLocaleString('en-MY')}`;
+              }
+              return ' Total: RM ' + Math.round(c.raw).toLocaleString('en-MY');
+            },
+            filter: item => item.raw !== null
           }
         },
-        datalabels: {} // global override — each dataset controls its own
+        datalabels: {}
       },
       scales: {
-        x: { ticks: { color: cd.tick, font:{size:10}, autoSkip:false, maxRotation:35 }, grid:{color:cd.grid} },
-        y: { ticks: { color: cd.tick, font:{size:10}, callback: v => 'RM '+(v/1000).toFixed(0)+'K' }, grid:{color:cd.grid} }
+        x: {
+          ticks: { color: cd.tick, font:{size:9}, autoSkip: true, maxTicksLimit: 18, maxRotation: 45, minRotation: 30 },
+          grid: { color: cd.grid }
+        },
+        y: {
+          position: 'left',
+          ticks: { color: cd.tick, font:{size:10}, callback: v => 'RM '+(v/1000).toFixed(0)+'K' },
+          grid: { color: cd.grid }
+        },
+        y2: {
+          position: 'right',
+          ticks: { color: '#7DD3C8', font: { size: 9, family: 'DM Mono' },
+                   callback: v => (v >= 0 ? '+' : '') + (v/1000).toFixed(0) + 'K' },
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: 'MoM Δ', color: '#7DD3C8', font: { size: 9, family: 'DM Mono' } }
+        }
       }
     },
     plugins: [ChartDataLabels]
@@ -871,7 +1095,12 @@ function buildOutletChart(filtered) {
       count: v.filter(r=>hasEmployeeId(r)).length
     }))
     .sort((a,b) => b.avg - a.avg)
-    .slice(0, 10);
+    .slice(0, 20); // allow up to 20 outlets now it's full width
+
+  // Dynamically size the chart container — 46px per outlet, min 280px
+  const dynamicHeight = Math.max(280, sorted.length * 46);
+  const container = document.getElementById('chart-outlet').parentElement;
+  if (container) container.style.height = dynamicHeight + 'px';
 
   const labels = sorted.map(x => x.o);
   const data   = sorted.map(x => x.avg);
@@ -1066,7 +1295,7 @@ function buildDonut(canvasId, legendId, filtered, colName, palette) {
     data: { labels, datasets: [{
       data, backgroundColor: colors,
       borderWidth: 2,
-      borderColor: isDark ? '#0d1424' : '#ffffff',
+      borderColor: '#18181C',
       hoverOffset: 6,
       datalabels: {
         display: ctx => {
@@ -1103,12 +1332,12 @@ function buildDonut(canvasId, legendId, filtered, colName, palette) {
 
   document.getElementById(legendId).innerHTML = labels.slice(0,8).map((l,i) => {
     const pct = total ? Math.round(data[i]/total*100) : 0;
-    return `<div class="flex items-center justify-between gap-2">
-      <div class="flex items-center gap-2 min-w-0">
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <div style="display:flex;align-items:center;gap:7px;min-width:0">
         <span style="width:9px;height:9px;border-radius:2px;background:${colors[i]};flex-shrink:0;display:inline-block"></span>
-        <span class="text-gray-600 dark:text-gray-400 truncate">${l}</span>
+        <span style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l}</span>
       </div>
-      <span class="font-mono font-500 text-gray-800 dark:text-gray-200 flex-shrink-0">${data[i]} <span class="text-gray-400 dark:text-slate-500">(${pct}%)</span></span>
+      <span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--text-primary);flex-shrink:0">${data[i]} <span style="color:var(--text-muted)">(${pct}%)</span></span>
     </div>`;
   }).join('');
 }
@@ -1172,12 +1401,16 @@ function detectCostColumn(rows) {
 }
 
 
-setInterval(fetchAllSheets, REFRESH_MS);
-
 // ══════════════════════════════════════════
 //  BOOT
 // ══════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', fetchAllSheets);
+window.addEventListener('DOMContentLoaded', async () => {
+  // Always fetch on first load (initial data)
+  await fetchAllSheets();
+  markSyncedToday();
+  // Schedule future syncs at 6am KL daily
+  scheduleNextSync();
+});
 </script>
 </body>
 </html>
