@@ -151,7 +151,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--s950);color:var(--text-pr
   <!-- ── PANEL 1: KPI CARDS ── -->
   <section>
     <p class="section-label mb-3">Workforce Summary</p>
-    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
 
       <div class="kpi-card ss-card p-4">
         <p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Total Payroll</p>
@@ -186,13 +186,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--s950);color:var(--text-pr
       <div class="kpi-card p-4" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:12px">
         <p style="font-size:9px;font-family:'DM Mono',monospace;color:#34d399;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">New Hires</p>
         <p id="kpi-hires" style="font-size:22px;font-weight:600;color:#6ee7b7;line-height:1.1;font-family:'Playfair Display',serif">—</p>
-        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">From hire file</p>
+        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">From Date Joined</p>
       </div>
 
       <div class="kpi-card p-4" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px">
         <p style="font-size:9px;font-family:'DM Mono',monospace;color:#f87171;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Exited</p>
         <p id="kpi-exited" style="font-size:22px;font-weight:600;color:#fca5a5;line-height:1.1;font-family:'Playfair Display',serif">—</p>
-        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">From exit file</p>
+        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">From Date Resigned</p>
+      </div>
+
+      <div class="kpi-card p-4" style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px">
+        <p style="font-size:9px;font-family:'DM Mono',monospace;color:#a5b4fc;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Turnover Rate</p>
+        <p id="kpi-turnover" style="font-size:22px;font-weight:600;color:#c7d2fe;line-height:1.1;font-family:'Playfair Display',serif">—</p>
+        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">Exits ÷ avg headcount</p>
       </div>
 
     </div>
@@ -230,6 +236,44 @@ body{font-family:'DM Sans',sans-serif;background:var(--s950);color:var(--text-pr
         </div>
         <div style="position:relative;height:300px;width:100%">
           <canvas id="chart-outlet" role="img" aria-label="Average payroll cost by outlet"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="gold-line"></div>
+
+  <!-- ── PANEL: WORKFORCE FLOW & ATTRITION ── -->
+  <section>
+    <p class="section-label mb-3">Workforce Flow & Attrition</p>
+    <div class="flex flex-col gap-4">
+
+      <!-- Hires vs Exits + Net Change — full width -->
+      <div class="ss-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p style="font-size:13px;font-weight:500;color:var(--text-primary)">Hires vs Exits</p>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:2px">Full history · Net headcount change · Company/Outlet/Category/Grade filters apply (Year/Month does not)</p>
+          </div>
+          <span class="chart-badge">BAR + NET</span>
+        </div>
+        <div style="position:relative;height:300px;width:100%">
+          <canvas id="chart-flow" role="img" aria-label="Hires versus exits and net headcount change"></canvas>
+        </div>
+      </div>
+
+      <!-- Attrition rate by outlet — full width -->
+      <div class="ss-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p style="font-size:13px;font-weight:500;color:var(--text-primary)">Attrition Rate by Outlet</p>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:2px">Exits ÷ everyone ever recorded at that outlet (lifetime) · highest first</p>
+          </div>
+          <span class="chart-badge">BAR</span>
+        </div>
+        <div style="position:relative;height:300px;width:100%">
+          <canvas id="chart-attrition" role="img" aria-label="Attrition rate by outlet"></canvas>
         </div>
       </div>
 
@@ -860,23 +904,37 @@ function applyFilters() {
     return periodSet.has(key);
   }
 
-  // Active Accounts = true point-in-time headcount as of the last day of the
-  // latest period in scope: joined on/before that date AND not yet resigned
-  // (or resigned strictly after that date).
-  let activeCount = 0;
-  if (periods.length) {
-    const [asOfYear, asOfMonth] = periods[periods.length - 1].split('-').map(Number);
-    const asOfEnd = new Date(asOfYear, asOfMonth, 0, 23, 59, 59); // last day of that month
-    activeCount = uniqueRoster.filter(r => {
+  // True point-in-time headcount as of a given cut-off date: joined on/before
+  // that date AND not yet resigned (or resigned strictly after that date).
+  function headcountAsOf(rosterArr, asOfDate) {
+    return rosterArr.filter(r => {
       const joined = parseFlexibleDate(r[DATEJOIN_COL]);
-      if (!joined || joined > asOfEnd) return false;
+      if (!joined || joined > asOfDate) return false;
       const resigned = parseFlexibleDate(r[DATERESIGN_COL]);
-      return !resigned || resigned > asOfEnd;
+      return !resigned || resigned > asOfDate;
     }).length;
   }
 
   const hiresFiltered = uniqueRoster.filter(r => dateFallsInScope(r[DATEJOIN_COL]));
   const exitsFiltered  = uniqueRoster.filter(r => dateFallsInScope(r[DATERESIGN_COL]));
+
+  // Active Accounts = headcount as of the last day of the latest in-scope period.
+  // Turnover Rate = exits in scope ÷ average headcount across the in-scope window
+  // (average of headcount at the START and END of the window) — the standard
+  // HR formula, so the % lines up with how leadership benchmarks turnover elsewhere.
+  let activeCount = 0, turnoverRate = 0;
+  if (periods.length) {
+    const [endY, endM] = periods[periods.length - 1].split('-').map(Number);
+    const asOfEnd = new Date(endY, endM, 0, 23, 59, 59); // last day of latest in-scope month
+    activeCount = headcountAsOf(uniqueRoster, asOfEnd);
+
+    const [startY, startM] = periods[0].split('-').map(Number);
+    const asOfStart = new Date(startY, startM - 1, 0, 23, 59, 59); // last day of month BEFORE the window starts
+    const startHC = headcountAsOf(uniqueRoster, asOfStart);
+
+    const avgHC = (startHC + activeCount) / 2;
+    turnoverRate = avgHC ? (exitsFiltered.length / avgHC * 100) : 0;
+  }
 
   // ── Update KPI DOM ──
   setKPI('kpi-payroll',    'RM ' + Math.round(totalPayroll).toLocaleString('en-MY'));
@@ -886,6 +944,7 @@ function applyFilters() {
   setKPI('kpi-active',     activeCount.toLocaleString());
   setKPI('kpi-hires',      hiresFiltered.length.toLocaleString());
   setKPI('kpi-exited',     exitsFiltered.length.toLocaleString());
+  setKPI('kpi-turnover',   turnoverRate.toFixed(1) + '%');
   document.getElementById('kpi-avg-cat-label').textContent   = topCat   ? topCat.name   + ' highest' : 'By category';
   document.getElementById('kpi-avg-grade-label').textContent = topGrade ? topGrade.name + ' highest' : 'By grade';
 
@@ -894,6 +953,8 @@ function applyFilters() {
   buildOutletChart(filtered);
   buildDonut('chart-cit', 'legend-cit', filtered, 'Citizenship Description', CIT_PALETTE);
   buildNatFlags(filtered);
+  buildFlowChart(f);
+  buildAttritionChart(f);
 }
 
 function setKPI(id, val) {
@@ -1271,6 +1332,206 @@ function buildOutletChart(filtered) {
         },
         y: {
           ticks: { color: cd.tick, font:{size:10} },
+          grid: { display: false }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+// ══════════════════════════════════════════
+//  WORKFORCE FLOW & ATTRITION
+//  Both charts intentionally ignore the Year/Month filter — they're trend/
+//  lifetime views, so showing only one month would defeat the purpose.
+//  Company/Outlet/Category/Grade filters still apply.
+// ══════════════════════════════════════════
+function getScopedRoster(f) {
+  const rows = RAW.hc.filter(r => {
+    if (!hasEmployeeId(r)) return false;
+    if (!inFilter(f.company,  r['Company Name']))  return false;
+    if (!inFilter(f.outlet,   r['Outlet']))        return false;
+    if (!inFilter(f.category, r['Category Name'])) return false;
+    if (!inFilter(f.grade,    r['Job Grades']))    return false;
+    return true;
+  });
+  const byEmp = new Map();
+  rows.forEach(r => byEmp.set(r['Employee No'], r));
+  return [...byEmp.values()];
+}
+
+function buildFlowChart(f) {
+  const roster = getScopedRoster(f);
+  const byMonth = {}; // 'YYYY-MM' -> { hires, exits }
+
+  roster.forEach(r => {
+    const joined = parseFlexibleDate(r[DATEJOIN_COL]);
+    if (joined) {
+      const k = `${joined.getFullYear()}-${String(joined.getMonth()+1).padStart(2,'0')}`;
+      (byMonth[k] = byMonth[k] || { hires: 0, exits: 0 }).hires++;
+    }
+    const resigned = parseFlexibleDate(r[DATERESIGN_COL]);
+    if (resigned) {
+      const k = `${resigned.getFullYear()}-${String(resigned.getMonth()+1).padStart(2,'0')}`;
+      (byMonth[k] = byMonth[k] || { hires: 0, exits: 0 }).exits++;
+    }
+  });
+
+  const keys   = Object.keys(byMonth).sort();
+  const labels = keys.map(k => { const [y,m] = k.split('-'); return `${MONTH_NAME[m]} ${y}`; });
+  const hiresData = keys.map(k => byMonth[k].hires);
+  const exitsData = keys.map(k => byMonth[k].exits);
+  const netData   = keys.map(k => byMonth[k].hires - byMonth[k].exits);
+
+  const ctx = document.getElementById('chart-flow').getContext('2d');
+  if (CHARTS.flow) CHARTS.flow.destroy();
+  const cd = cdOpts();
+
+  CHARTS.flow = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'bar', label: 'Hires', data: hiresData, order: 2,
+          backgroundColor: 'rgba(16,185,129,0.75)', borderColor: '#34d399', borderWidth: 1,
+          borderRadius: 4, borderSkipped: false,
+          datalabels: {
+            display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+            anchor: 'end', align: 'end', offset: 2, color: '#6ee7b7',
+            font: { size: 8, family: 'DM Mono', weight: '500' },
+            formatter: v => v > 0 ? '+' + v : ''
+          }
+        },
+        {
+          type: 'bar', label: 'Exits', data: exitsData, order: 2,
+          backgroundColor: 'rgba(239,68,68,0.75)', borderColor: '#f87171', borderWidth: 1,
+          borderRadius: 4, borderSkipped: false,
+          datalabels: {
+            display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+            anchor: 'end', align: 'end', offset: 2, color: '#fca5a5',
+            font: { size: 8, family: 'DM Mono', weight: '500' },
+            formatter: v => v > 0 ? '−' + v : ''
+          }
+        },
+        {
+          type: 'line', label: 'Net Change', data: netData, order: 1,
+          borderColor: '#E8C96A', backgroundColor: 'transparent', borderWidth: 2,
+          pointRadius: 3, pointHoverRadius: 5,
+          pointBackgroundColor: netData.map(v => v >= 0 ? '#6ee7b7' : '#f87171'),
+          pointBorderColor: 'transparent', tension: 0.3,
+          datalabels: {
+            display: true, anchor: 'top', align: 'top', offset: 4,
+            color: '#E8C96A', font: { size: 8, family: 'DM Mono', weight: '600' },
+            formatter: v => (v >= 0 ? '+' : '') + v
+          }
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true, position: 'top', align: 'end',
+          labels: { color: '#A89880', font: { size: 10 }, boxWidth: 12, boxHeight: 12, padding: 12 }
+        },
+        tooltip: {
+          ...cd.tooltip,
+          callbacks: { label: c => ` ${c.dataset.label}: ${c.raw}` }
+        },
+        datalabels: {}
+      },
+      scales: {
+        x: {
+          ticks: { color: cd.tick, font: { size: 9 }, autoSkip: true, maxTicksLimit: 18, maxRotation: 45, minRotation: 30 },
+          grid: { color: cd.grid }
+        },
+        y: {
+          ticks: { color: cd.tick, font: { size: 10 } },
+          grid: { color: cd.grid },
+          title: { display: true, text: 'Headcount', color: '#A89880', font: { size: 9, family: 'DM Mono' } }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+function buildAttritionChart(f) {
+  const roster = getScopedRoster(f);
+  const byOutlet = {};
+
+  roster.forEach(r => {
+    const outlet = r['Outlet'] || 'Unknown';
+    const o = (byOutlet[outlet] = byOutlet[outlet] || { everActive: 0, exited: 0 });
+    o.everActive++;
+    if (parseFlexibleDate(r[DATERESIGN_COL])) o.exited++;
+  });
+
+  const rows = Object.entries(byOutlet)
+    .map(([outlet, v]) => ({
+      outlet, exited: v.exited, everActive: v.everActive,
+      rate: v.everActive ? (v.exited / v.everActive * 100) : 0
+    }))
+    .filter(r => r.everActive > 0)
+    .sort((a,b) => b.rate - a.rate)
+    .slice(0, 20);
+
+  const labels = rows.map(r => r.outlet);
+  const data   = rows.map(r => Math.round(r.rate * 10) / 10);
+  const counts = rows.map(r => r.exited);
+  const totals = rows.map(r => r.everActive);
+
+  const dynamicHeight = Math.max(280, rows.length * 36);
+  const container = document.getElementById('chart-attrition').parentElement;
+  if (container) container.style.height = dynamicHeight + 'px';
+
+  const ctx = document.getElementById('chart-attrition').getContext('2d');
+  if (CHARTS.attrition) CHARTS.attrition.destroy();
+  const cd = cdOpts();
+
+  CHARTS.attrition = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Attrition Rate (%)',
+        data,
+        backgroundColor: data.map(v => v >= 20 ? 'rgba(239,68,68,0.8)' : v >= 10 ? 'rgba(232,144,58,0.8)' : 'rgba(201,168,76,0.8)'),
+        borderRadius: 4, borderSkipped: false,
+        datalabels: {
+          display: true, anchor: 'end', align: 'end', offset: 4,
+          color: '#A89880', font: { size: 9, family: 'DM Mono', weight: '500' },
+          formatter: (v, c) => v.toFixed(1) + '%  ·  ' + counts[c.dataIndex] + '/' + totals[c.dataIndex] + ' left'
+        }
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      layout: { padding: { right: 130 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...cd.tooltip,
+          callbacks: {
+            label: c => [
+              ' Attrition: ' + c.raw.toFixed(1) + '%',
+              ' ' + counts[c.dataIndex] + ' of ' + totals[c.dataIndex] + ' ever active here have left'
+            ]
+          }
+        },
+        datalabels: {}
+      },
+      scales: {
+        x: {
+          ticks: { color: cd.tick, font: { size: 10 }, callback: v => v + '%' },
+          grid: { color: cd.grid }
+        },
+        y: {
+          ticks: { color: cd.tick, font: { size: 10 } },
           grid: { display: false }
         }
       }
