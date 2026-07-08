@@ -768,6 +768,8 @@ function applyFilters() {
   const filteredHC = filtered.filter(r => hasEmployeeId(r));
 
   // Deduplicated headcount — each unique employee counted once at their latest month
+  // within the current filtered dataset. This is the single source of truth for
+  // all headcount numbers — KPI, nationality, citizenship must all use this same set.
   const dedupedHC  = dedupeByLatestMonth(filteredHC);
 
   // ── KPIs ──
@@ -815,8 +817,8 @@ function applyFilters() {
   // ── Charts ──
   buildTrendChart(filtered, f);
   buildOutletChart(filtered);
-  buildDonut('chart-cit', 'legend-cit', filtered, 'Citizenship Description', CIT_PALETTE);
-  buildNatFlags(filtered);
+  buildDonut('chart-cit', 'legend-cit', dedupedHC, 'Citizenship Description', CIT_PALETTE);
+  buildNatFlags(dedupedHC);
 }
 
 function setKPI(id, val) {
@@ -1291,12 +1293,12 @@ function dedupeByLatestMonth(rows) {
   return Object.values(latest).map(x => x.row);
 }
 
-function buildNatFlags(filtered) {
-  // Deduplicate — each employee counted once using their latest payroll month
-  const empRows = dedupeByLatestMonth(filtered.filter(r => hasEmployeeId(r)));
-  const groups  = groupBy(empRows.length ? empRows : filtered, 'Nationality Description');
+function buildNatFlags(dedupedRows) {
+  // Receives already-deduplicated employee rows from applyFilters
+  // so this count always matches the Active Headcount KPI exactly
+  const groups  = groupBy(dedupedRows, 'Nationality Description');
   const sorted  = Object.entries(groups).sort((a,b) => b[1].length - a[1].length);
-  const total   = empRows.length || sorted.reduce((s,[,v])=>s+v.length, 0);
+  const total   = dedupedRows.length;
 
   const grid = document.getElementById('nat-flags-grid');
   if (!grid) return;
@@ -1336,10 +1338,9 @@ function buildNatFlags(filtered) {
   }).join('');
 }
 
-function buildDonut(canvasId, legendId, filtered, colName, palette) {
-  // Deduplicate — each employee counted once using their latest payroll month
-  const empRows = dedupeByLatestMonth(filtered.filter(r => hasEmployeeId(r)));
-  const groups  = groupBy(empRows.length ? empRows : filtered, colName);
+function buildDonut(canvasId, legendId, dedupedRows, colName, palette) {
+  // Receives already-deduplicated employee rows from applyFilters
+  const groups  = groupBy(dedupedRows, colName);
   const sorted  = Object.entries(groups).sort((a,b)=>b[1].length-a[1].length);
   const labels  = sorted.map(([k])=>k);
   const data    = sorted.map(([,v])=>v.length);
