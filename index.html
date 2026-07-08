@@ -151,7 +151,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--s950);color:var(--text-pr
   <!-- ── PANEL 1: KPI CARDS ── -->
   <section>
     <p class="section-label mb-3">Workforce Summary</p>
-    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
 
       <div class="kpi-card ss-card p-4">
         <p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Total Payroll</p>
@@ -186,19 +186,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--s950);color:var(--text-pr
       <div class="kpi-card p-4" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:12px">
         <p style="font-size:9px;font-family:'DM Mono',monospace;color:#34d399;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">New Hires</p>
         <p id="kpi-hires" style="font-size:22px;font-weight:600;color:#6ee7b7;line-height:1.1;font-family:'Playfair Display',serif">—</p>
-        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">From Date Joined</p>
+        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">From hire file</p>
       </div>
 
       <div class="kpi-card p-4" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px">
         <p style="font-size:9px;font-family:'DM Mono',monospace;color:#f87171;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Exited</p>
         <p id="kpi-exited" style="font-size:22px;font-weight:600;color:#fca5a5;line-height:1.1;font-family:'Playfair Display',serif">—</p>
-        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">From Date Resigned</p>
-      </div>
-
-      <div class="kpi-card p-4" style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px">
-        <p style="font-size:9px;font-family:'DM Mono',monospace;color:#a5b4fc;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Turnover Rate</p>
-        <p id="kpi-turnover" style="font-size:22px;font-weight:600;color:#c7d2fe;line-height:1.1;font-family:'Playfair Display',serif">—</p>
-        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">Exits ÷ avg headcount</p>
+        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">From exit file</p>
       </div>
 
     </div>
@@ -236,44 +230,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--s950);color:var(--text-pr
         </div>
         <div style="position:relative;height:300px;width:100%">
           <canvas id="chart-outlet" role="img" aria-label="Average payroll cost by outlet"></canvas>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <div class="gold-line"></div>
-
-  <!-- ── PANEL: WORKFORCE FLOW & ATTRITION ── -->
-  <section>
-    <p class="section-label mb-3">Workforce Flow & Attrition</p>
-    <div class="flex flex-col gap-4">
-
-      <!-- Hires vs Exits + Net Change — full width -->
-      <div class="ss-card p-5">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <p style="font-size:13px;font-weight:500;color:var(--text-primary)">Hires vs Exits</p>
-            <p style="font-size:11px;color:var(--text-muted);margin-top:2px">Full history · Net headcount change · Company/Outlet/Category/Grade filters apply (Year/Month does not)</p>
-          </div>
-          <span class="chart-badge">BAR + NET</span>
-        </div>
-        <div style="position:relative;height:300px;width:100%">
-          <canvas id="chart-flow" role="img" aria-label="Hires versus exits and net headcount change"></canvas>
-        </div>
-      </div>
-
-      <!-- Attrition rate by outlet — full width -->
-      <div class="ss-card p-5">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <p style="font-size:13px;font-weight:500;color:var(--text-primary)">Attrition Rate by Outlet</p>
-            <p style="font-size:11px;color:var(--text-muted);margin-top:2px">Exits ÷ everyone ever recorded at that outlet (lifetime) · highest first</p>
-          </div>
-          <span class="chart-badge">BAR</span>
-        </div>
-        <div style="position:relative;height:300px;width:100%">
-          <canvas id="chart-attrition" role="img" aria-label="Attrition rate by outlet"></canvas>
         </div>
       </div>
 
@@ -337,8 +293,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--s950);color:var(--text-pr
       <p style="color:var(--gold);font-weight:600">🔧 Column Debug — What your sheet actually sent</p>
       <button onclick="toggleDebug()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px">✕</button>
     </div>
-    <p style="color:var(--text-muted);margin-bottom:6px">Auto-detected cost column: <span id="debug-cost-col" style="color:var(--gold-light);font-weight:700">detecting…</span></p>
-    <p style="color:var(--text-muted);margin-bottom:12px">Auto-detected Date Joined / Date Resigned columns: <span id="debug-date-cols" style="color:var(--gold-light);font-weight:700">detecting…</span></p>
+    <p style="color:var(--text-muted);margin-bottom:12px">Auto-detected cost column: <span id="debug-cost-col" style="color:var(--gold-light);font-weight:700">detecting…</span></p>
+    <div id="debug-unrecognised" style="margin-bottom:14px;padding:10px;background:var(--s900);border-radius:6px;font-size:11px"></div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <p class="text-amber-400 mb-2">HC Raw File 2 — First row column headers:</p>
@@ -360,10 +316,9 @@ const SHEET_ID      = '1S6IS_jM1yZo60dq8IUYYU24WqLS7JnGlMfVWUjIZ2TI';
 const API_KEY       = 'AIzaSyCfUDtFPcpGdCR4-mcL03K4NkUs70akayU';
 const CLAUDE_API_KEY = 'YOUR_CLAUDE_API_KEY_HERE'; // ← Paste your Anthropic API key here
 const TABS      = {
-  hc:    'HC Raw File 2'
-  // 'New Hire Raw File' and 'Exit Raw File' are no longer fetched — as of this update,
-  // New Hires / Exited are derived straight from 'Date Joined' / 'Date Resigned' on
-  // HC Raw File 2, so the two separate tabs are no longer needed.
+  hc:    'HC Raw File 2',
+  hires: 'New Hire Raw File',
+  exits: 'Exit Raw File'
 };
 // ══════════════════════════════════════════
 //  SMART SYNC SCHEDULER
@@ -424,10 +379,8 @@ function scheduleNextSync() {
 // ══════════════════════════════════════════
 //  GLOBAL STATE
 // ══════════════════════════════════════════
-let RAW = { hc: [] };
+let RAW = { hc: [], hires: [], exits: [] };
 let COST_COL = 'Sum'; // auto-detected after first fetch
-let DATEJOIN_COL   = 'Date Joined';   // auto-detected after first fetch
-let DATERESIGN_COL = 'Date Resigned'; // auto-detected after first fetch
 let CHARTS = {};
 let isDark = true; // Stellar Signature always uses the premium dark theme
 
@@ -471,9 +424,10 @@ async function fetchAllSheets() {
     RAW.hc    = await fetchSheet(TABS.hc);
     COST_COL  = detectCostColumn(RAW.hc);
     console.log('Using cost column:', COST_COL);
-    DATEJOIN_COL   = detectDateColumn(RAW.hc, ['Date Joined','Date of Joining','Joining Date','Joined Date','Hire Date']);
-    DATERESIGN_COL = detectDateColumn(RAW.hc, ['Date Resigned','Resignation Date','Date of Resignation','Exit Date','Resigned Date']);
-    console.log('Using Date Joined column:', DATEJOIN_COL, '| Date Resigned column:', DATERESIGN_COL);
+    setOverlayMsg('Fetching new hire records…');
+    RAW.hires = await fetchSheet(TABS.hires);
+    setOverlayMsg('Fetching exit records…');
+    RAW.exits = await fetchSheet(TABS.exits);
 
     populateFilters();
     applyFilters();
@@ -521,18 +475,28 @@ const MONTH_NAMES = {
   '07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'
 };
 
-// Shared month-number lookups (also used by the trend chart further down)
-const MONTH_NUM  = { Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',
-                      Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12' };
-const MONTH_NAME = { '01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun',
-                      '07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec' };
-
 function parsePayrollMonth(val) {
-  // Returns { year: '2025', month: 'Dec' } or nulls if unparseable
   if (!val) return { year: null, month: null };
-  val = val.trim();
+  val = String(val).trim();
 
-  // Try "Dec-25" or "Dec-2025" or "Dec 25" or "Dec 2025"
+  // ── Handle Excel/Sheets serial date number (e.g. 45748) ──
+  // Excel epoch: Jan 1 1900 = 1 (with leap year bug, so offset = 25569 days to Unix epoch)
+  if (/^\d{5}$/.test(val)) {
+    const d = new Date((parseInt(val) - 25569) * 86400 * 1000);
+    if (!isNaN(d)) {
+      const yr = d.getUTCFullYear().toString();
+      const mn = MONTH_NAMES[String(d.getUTCMonth() + 1).padStart(2,'0')] || null;
+      return { year: yr, month: mn };
+    }
+  }
+
+  // ── Handle ISO date string "2026-04-01" or "2026-04-01T00:00:00.000Z" ──
+  const mISO = val.match(/^(\d{4})-(\d{2})-\d{2}/);
+  if (mISO) {
+    return { year: mISO[1], month: MONTH_NAMES[mISO[2]] || null };
+  }
+
+  // ── Handle "Apr-26" or "Apr-2026" or "Apr 26" or "Apr 2026" ──
   const mAlpha = val.match(/^([A-Za-z]+)[\s\-\/](\d{2,4})$/);
   if (mAlpha) {
     const mKey = mAlpha[1].toLowerCase();
@@ -542,95 +506,40 @@ function parsePayrollMonth(val) {
     return { year, month };
   }
 
-  // Try "2025-01" or "2025/01"
+  // ── Handle "2026-04" or "2026/04" ──
   const mNumYM = val.match(/^(\d{4})[\-\/](\d{1,2})$/);
   if (mNumYM) {
     return { year: mNumYM[1], month: MONTH_NAMES[mNumYM[2].padStart(2,'0')] || null };
   }
 
-  // Try "01/2025" or "01-2025"
+  // ── Handle "04/2026" or "04-2026" ──
   const mNumMY = val.match(/^(\d{1,2})[\-\/](\d{4})$/);
   if (mNumMY) {
     return { year: mNumMY[2], month: MONTH_NAMES[mNumMY[1].padStart(2,'0')] || null };
   }
 
-  // Try "January 2025" or "January-2025"
+  // ── Handle "April 2026" or "April-2026" ──
   const mFull = val.match(/^([A-Za-z]+)[\s\-](\d{4})$/);
   if (mFull) {
     return { year: mFull[2], month: MONTH_NAMES[mFull[1].toLowerCase()] || null };
   }
 
+  // ── Handle "Apr26" with no separator ──
+  const mNoSep = val.match(/^([A-Za-z]+)(\d{2,4})$/);
+  if (mNoSep) {
+    const mKey = mNoSep[1].toLowerCase();
+    const yRaw = mNoSep[2];
+    const month = MONTH_NAMES[mKey] || null;
+    const year  = yRaw.length === 2 ? '20' + yRaw : yRaw;
+    return { year, month };
+  }
+
+  // ── Unrecognised — log it so you can see what format Google Sheets is sending ──
+  if (val && val !== 'Payroll Month') {
+    console.warn(`[parsePayrollMonth] Unrecognised format: "${val}" — add this to the parser if needed`);
+  }
+
   return { year: null, month: null };
-}
-
-// ══════════════════════════════════════════
-//  DATE JOINED / DATE RESIGNED PARSER
-//  Handles common spreadsheet date formats:
-//  "2026-04-20", "20/04/2026", "20-Apr-2026", "Apr 20, 2026", etc.
-//  Returns a JS Date, or null if the cell is blank/unparseable.
-// ══════════════════════════════════════════
-const MONTH_ABBR_IDX = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11 };
-
-function parseFlexibleDate(val) {
-  if (!val) return null;
-  val = String(val).trim();
-  if (!val) return null;
-
-  // Try day-month-year text/slash formats first: "20-Apr-2026", "20/04/2026", "20 Apr 26"
-  const dmy = val.match(/^(\d{1,2})[\s\-\/]([A-Za-z]{3,9}|\d{1,2})[\s\-\/](\d{2,4})$/);
-  if (dmy) {
-    const day = parseInt(dmy[1], 10);
-    const monthToken = dmy[2].toLowerCase();
-    const monthIdx = /^\d+$/.test(monthToken)
-      ? parseInt(monthToken, 10) - 1
-      : MONTH_ABBR_IDX[monthToken.slice(0,3)];
-    let year = parseInt(dmy[3], 10);
-    if (year < 100) year += 2000;
-    if (monthIdx !== undefined && !isNaN(monthIdx) && !isNaN(day) && !isNaN(year)) {
-      const d = new Date(year, monthIdx, day);
-      if (!isNaN(d.getTime())) return d;
-    }
-  }
-
-  // Fall back to native parsing: handles "2026-04-20", "April 20, 2026", etc.
-  const native = new Date(val);
-  if (!isNaN(native.getTime()) && /\d{4}/.test(val)) return native;
-
-  return null;
-}
-
-// Picks whichever of the candidate column names actually exists in the sheet,
-// same defensive pattern as detectCostColumn() below.
-function detectDateColumn(rows, candidates) {
-  if (!rows.length) return candidates[0];
-  const headers = Object.keys(rows[0]);
-  const found = candidates.find(c => headers.includes(c));
-  return found || candidates[0];
-}
-
-// All "YYYY-MM" payroll periods actually present in the headcount sheet, sorted ascending.
-function allPeriodKeys(hc) {
-  const keys = new Set();
-  hc.forEach(r => {
-    const { year, month } = parsePayrollMonth(r['Payroll Month']);
-    if (year && month) keys.add(`${year}-${MONTH_NUM[month]}`);
-  });
-  return [...keys].sort();
-}
-
-// Which "YYYY-MM" periods are in scope given the active Year/Month filters.
-// If neither Year nor Month is selected, scope defaults to the single latest
-// period in the data — so Active/Hires/Exited read as "right now", not an
-// all-time total that grows every time a new month is added to the sheet.
-function effectivePeriods(f, hc) {
-  const all = allPeriodKeys(hc);
-  if (f.year.length === 0 && f.month.length === 0) {
-    return all.length ? [all[all.length - 1]] : [];
-  }
-  return all.filter(k => {
-    const [y, m] = k.split('-');
-    return inFilter(f.year, y) && inFilter(f.month, MONTH_NAME[m]);
-  });
 }
 
 // ══════════════════════════════════════════
@@ -855,13 +764,16 @@ function applyFilters() {
   // ALL matching rows — includes blank Employee No (backcharge lines carry real cost)
   const filtered   = RAW.hc.filter(r => matchRow(r, f));
 
-  // Employee-only rows — for the Avg Manpower denominator only (excludes blank Employee No duplicates)
+  // Employee-only rows — for headcount KPI only (excludes blank Employee No duplicates)
   const filteredHC = filtered.filter(r => hasEmployeeId(r));
+
+  // Deduplicated headcount — each unique employee counted once at their latest month
+  const dedupedHC  = dedupeByLatestMonth(filteredHC);
 
   // ── KPIs ──
   const totalPayroll = filtered.reduce((s,r) => s + toNum(r[COST_COL]), 0);   // all rows incl. backcharge
-  const recordCount  = filteredHC.length;                                      // payroll-line count, used only for Avg Manpower
-  const avgManpower  = recordCount ? totalPayroll / recordCount : 0;
+  const activeCount  = dedupedHC.length;                                        // unique employees only
+  const avgManpower  = activeCount ? totalPayroll / activeCount : 0;
 
   // Avg cost per category
   const catGroups = groupBy(filtered, 'Category Name');
@@ -881,60 +793,13 @@ function applyFilters() {
   const topGrade = gradeAvgs.sort((a,b)=>b.avg-a.avg)[0];
   const avgGrade = gradeAvgs.length ? gradeAvgs.reduce((s,g)=>s+g.avg,0)/gradeAvgs.length : 0;
 
-  // ── Active Accounts / New Hires / Exited ──────────────────────────
-  // Derived directly from HC Raw File 2's Date Joined / Date Resigned columns
-  // (per the decision to stop relying on the separate New Hire / Exit tabs).
-  // One employee can appear on several payroll-month rows, so we de-duplicate
-  // by Employee No first — otherwise someone present in 6 months would be
-  // counted as 6 hires instead of 1.
-  const roster = filtered.filter(r => hasEmployeeId(r));
-  const rosterByEmp = new Map();
-  roster.forEach(r => rosterByEmp.set(r['Employee No'], r));
-  const uniqueRoster = [...rosterByEmp.values()];
-
-  // Which payroll period(s) are "in scope" — the selected Year/Month, or the
-  // latest period in the sheet if neither is selected.
-  const periods   = effectivePeriods(f, RAW.hc);
-  const periodSet = new Set(periods);
-
-  function dateFallsInScope(rawVal) {
-    const d = parseFlexibleDate(rawVal);
-    if (!d) return false;
-    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    return periodSet.has(key);
-  }
-
-  // True point-in-time headcount as of a given cut-off date: joined on/before
-  // that date AND not yet resigned (or resigned strictly after that date).
-  function headcountAsOf(rosterArr, asOfDate) {
-    return rosterArr.filter(r => {
-      const joined = parseFlexibleDate(r[DATEJOIN_COL]);
-      if (!joined || joined > asOfDate) return false;
-      const resigned = parseFlexibleDate(r[DATERESIGN_COL]);
-      return !resigned || resigned > asOfDate;
-    }).length;
-  }
-
-  const hiresFiltered = uniqueRoster.filter(r => dateFallsInScope(r[DATEJOIN_COL]));
-  const exitsFiltered  = uniqueRoster.filter(r => dateFallsInScope(r[DATERESIGN_COL]));
-
-  // Active Accounts = headcount as of the last day of the latest in-scope period.
-  // Turnover Rate = exits in scope ÷ average headcount across the in-scope window
-  // (average of headcount at the START and END of the window) — the standard
-  // HR formula, so the % lines up with how leadership benchmarks turnover elsewhere.
-  let activeCount = 0, turnoverRate = 0;
-  if (periods.length) {
-    const [endY, endM] = periods[periods.length - 1].split('-').map(Number);
-    const asOfEnd = new Date(endY, endM, 0, 23, 59, 59); // last day of latest in-scope month
-    activeCount = headcountAsOf(uniqueRoster, asOfEnd);
-
-    const [startY, startM] = periods[0].split('-').map(Number);
-    const asOfStart = new Date(startY, startM - 1, 0, 23, 59, 59); // last day of month BEFORE the window starts
-    const startHC = headcountAsOf(uniqueRoster, asOfStart);
-
-    const avgHC = (startHC + activeCount) / 2;
-    turnoverRate = avgHC ? (exitsFiltered.length / avgHC * 100) : 0;
-  }
+  // Hires & Exits — apply company and outlet filters
+  const hiresFiltered = RAW.hires.filter(r =>
+    inFilter(f.company, r['Company Name']) && inFilter(f.outlet, r['Outlet'])
+  );
+  const exitsFiltered = RAW.exits.filter(r =>
+    inFilter(f.company, r['Company Name']) && inFilter(f.outlet, r['Outlet'])
+  );
 
   // ── Update KPI DOM ──
   setKPI('kpi-payroll',    'RM ' + Math.round(totalPayroll).toLocaleString('en-MY'));
@@ -944,7 +809,6 @@ function applyFilters() {
   setKPI('kpi-active',     activeCount.toLocaleString());
   setKPI('kpi-hires',      hiresFiltered.length.toLocaleString());
   setKPI('kpi-exited',     exitsFiltered.length.toLocaleString());
-  setKPI('kpi-turnover',   turnoverRate.toFixed(1) + '%');
   document.getElementById('kpi-avg-cat-label').textContent   = topCat   ? topCat.name   + ' highest' : 'By category';
   document.getElementById('kpi-avg-grade-label').textContent = topGrade ? topGrade.name + ' highest' : 'By grade';
 
@@ -953,8 +817,6 @@ function applyFilters() {
   buildOutletChart(filtered);
   buildDonut('chart-cit', 'legend-cit', filtered, 'Citizenship Description', CIT_PALETTE);
   buildNatFlags(filtered);
-  buildFlowChart(f);
-  buildAttritionChart(f);
 }
 
 function setKPI(id, val) {
@@ -1341,206 +1203,6 @@ function buildOutletChart(filtered) {
 }
 
 // ══════════════════════════════════════════
-//  WORKFORCE FLOW & ATTRITION
-//  Both charts intentionally ignore the Year/Month filter — they're trend/
-//  lifetime views, so showing only one month would defeat the purpose.
-//  Company/Outlet/Category/Grade filters still apply.
-// ══════════════════════════════════════════
-function getScopedRoster(f) {
-  const rows = RAW.hc.filter(r => {
-    if (!hasEmployeeId(r)) return false;
-    if (!inFilter(f.company,  r['Company Name']))  return false;
-    if (!inFilter(f.outlet,   r['Outlet']))        return false;
-    if (!inFilter(f.category, r['Category Name'])) return false;
-    if (!inFilter(f.grade,    r['Job Grades']))    return false;
-    return true;
-  });
-  const byEmp = new Map();
-  rows.forEach(r => byEmp.set(r['Employee No'], r));
-  return [...byEmp.values()];
-}
-
-function buildFlowChart(f) {
-  const roster = getScopedRoster(f);
-  const byMonth = {}; // 'YYYY-MM' -> { hires, exits }
-
-  roster.forEach(r => {
-    const joined = parseFlexibleDate(r[DATEJOIN_COL]);
-    if (joined) {
-      const k = `${joined.getFullYear()}-${String(joined.getMonth()+1).padStart(2,'0')}`;
-      (byMonth[k] = byMonth[k] || { hires: 0, exits: 0 }).hires++;
-    }
-    const resigned = parseFlexibleDate(r[DATERESIGN_COL]);
-    if (resigned) {
-      const k = `${resigned.getFullYear()}-${String(resigned.getMonth()+1).padStart(2,'0')}`;
-      (byMonth[k] = byMonth[k] || { hires: 0, exits: 0 }).exits++;
-    }
-  });
-
-  const keys   = Object.keys(byMonth).sort();
-  const labels = keys.map(k => { const [y,m] = k.split('-'); return `${MONTH_NAME[m]} ${y}`; });
-  const hiresData = keys.map(k => byMonth[k].hires);
-  const exitsData = keys.map(k => byMonth[k].exits);
-  const netData   = keys.map(k => byMonth[k].hires - byMonth[k].exits);
-
-  const ctx = document.getElementById('chart-flow').getContext('2d');
-  if (CHARTS.flow) CHARTS.flow.destroy();
-  const cd = cdOpts();
-
-  CHARTS.flow = new Chart(ctx, {
-    data: {
-      labels,
-      datasets: [
-        {
-          type: 'bar', label: 'Hires', data: hiresData, order: 2,
-          backgroundColor: 'rgba(16,185,129,0.75)', borderColor: '#34d399', borderWidth: 1,
-          borderRadius: 4, borderSkipped: false,
-          datalabels: {
-            display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-            anchor: 'end', align: 'end', offset: 2, color: '#6ee7b7',
-            font: { size: 8, family: 'DM Mono', weight: '500' },
-            formatter: v => v > 0 ? '+' + v : ''
-          }
-        },
-        {
-          type: 'bar', label: 'Exits', data: exitsData, order: 2,
-          backgroundColor: 'rgba(239,68,68,0.75)', borderColor: '#f87171', borderWidth: 1,
-          borderRadius: 4, borderSkipped: false,
-          datalabels: {
-            display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-            anchor: 'end', align: 'end', offset: 2, color: '#fca5a5',
-            font: { size: 8, family: 'DM Mono', weight: '500' },
-            formatter: v => v > 0 ? '−' + v : ''
-          }
-        },
-        {
-          type: 'line', label: 'Net Change', data: netData, order: 1,
-          borderColor: '#E8C96A', backgroundColor: 'transparent', borderWidth: 2,
-          pointRadius: 3, pointHoverRadius: 5,
-          pointBackgroundColor: netData.map(v => v >= 0 ? '#6ee7b7' : '#f87171'),
-          pointBorderColor: 'transparent', tension: 0.3,
-          datalabels: {
-            display: true, anchor: 'top', align: 'top', offset: 4,
-            color: '#E8C96A', font: { size: 8, family: 'DM Mono', weight: '600' },
-            formatter: v => (v >= 0 ? '+' : '') + v
-          }
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: {
-          display: true, position: 'top', align: 'end',
-          labels: { color: '#A89880', font: { size: 10 }, boxWidth: 12, boxHeight: 12, padding: 12 }
-        },
-        tooltip: {
-          ...cd.tooltip,
-          callbacks: { label: c => ` ${c.dataset.label}: ${c.raw}` }
-        },
-        datalabels: {}
-      },
-      scales: {
-        x: {
-          ticks: { color: cd.tick, font: { size: 9 }, autoSkip: true, maxTicksLimit: 18, maxRotation: 45, minRotation: 30 },
-          grid: { color: cd.grid }
-        },
-        y: {
-          ticks: { color: cd.tick, font: { size: 10 } },
-          grid: { color: cd.grid },
-          title: { display: true, text: 'Headcount', color: '#A89880', font: { size: 9, family: 'DM Mono' } }
-        }
-      }
-    },
-    plugins: [ChartDataLabels]
-  });
-}
-
-function buildAttritionChart(f) {
-  const roster = getScopedRoster(f);
-  const byOutlet = {};
-
-  roster.forEach(r => {
-    const outlet = r['Outlet'] || 'Unknown';
-    const o = (byOutlet[outlet] = byOutlet[outlet] || { everActive: 0, exited: 0 });
-    o.everActive++;
-    if (parseFlexibleDate(r[DATERESIGN_COL])) o.exited++;
-  });
-
-  const rows = Object.entries(byOutlet)
-    .map(([outlet, v]) => ({
-      outlet, exited: v.exited, everActive: v.everActive,
-      rate: v.everActive ? (v.exited / v.everActive * 100) : 0
-    }))
-    .filter(r => r.everActive > 0)
-    .sort((a,b) => b.rate - a.rate)
-    .slice(0, 20);
-
-  const labels = rows.map(r => r.outlet);
-  const data   = rows.map(r => Math.round(r.rate * 10) / 10);
-  const counts = rows.map(r => r.exited);
-  const totals = rows.map(r => r.everActive);
-
-  const dynamicHeight = Math.max(280, rows.length * 36);
-  const container = document.getElementById('chart-attrition').parentElement;
-  if (container) container.style.height = dynamicHeight + 'px';
-
-  const ctx = document.getElementById('chart-attrition').getContext('2d');
-  if (CHARTS.attrition) CHARTS.attrition.destroy();
-  const cd = cdOpts();
-
-  CHARTS.attrition = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Attrition Rate (%)',
-        data,
-        backgroundColor: data.map(v => v >= 20 ? 'rgba(239,68,68,0.8)' : v >= 10 ? 'rgba(232,144,58,0.8)' : 'rgba(201,168,76,0.8)'),
-        borderRadius: 4, borderSkipped: false,
-        datalabels: {
-          display: true, anchor: 'end', align: 'end', offset: 4,
-          color: '#A89880', font: { size: 9, family: 'DM Mono', weight: '500' },
-          formatter: (v, c) => v.toFixed(1) + '%  ·  ' + counts[c.dataIndex] + '/' + totals[c.dataIndex] + ' left'
-        }
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      indexAxis: 'y',
-      layout: { padding: { right: 130 } },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          ...cd.tooltip,
-          callbacks: {
-            label: c => [
-              ' Attrition: ' + c.raw.toFixed(1) + '%',
-              ' ' + counts[c.dataIndex] + ' of ' + totals[c.dataIndex] + ' ever active here have left'
-            ]
-          }
-        },
-        datalabels: {}
-      },
-      scales: {
-        x: {
-          ticks: { color: cd.tick, font: { size: 10 }, callback: v => v + '%' },
-          grid: { color: cd.grid }
-        },
-        y: {
-          ticks: { color: cd.tick, font: { size: 10 } },
-          grid: { display: false }
-        }
-      }
-    },
-    plugins: [ChartDataLabels]
-  });
-}
-
-// ══════════════════════════════════════════
 //  NATIONALITY FLAG INDICATORS
 // ══════════════════════════════════════════
 const NAT_FLAG_MAP = {
@@ -1606,8 +1268,32 @@ function flagImg(code, name) {
   />`;
 }
 
+// ══════════════════════════════════════════
+//  DEDUPLICATE BY LATEST PAYROLL MONTH
+//  For demographic charts — each employee
+//  should only be counted once using their
+//  most recent payroll month entry
+// ══════════════════════════════════════════
+function dedupeByLatestMonth(rows) {
+  const MONTH_NUM = { Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',
+                      Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12' };
+  const latest = {};
+  rows.forEach(r => {
+    const empNo = (r['Employee No'] || '').trim();
+    if (!empNo) return; // skip blank Employee No rows
+    const { year, month } = parsePayrollMonth(r['Payroll Month']);
+    if (!year || !month) return;
+    const key = `${year}-${MONTH_NUM[month] || '00'}`;
+    if (!latest[empNo] || key > latest[empNo].key) {
+      latest[empNo] = { key, row: r };
+    }
+  });
+  return Object.values(latest).map(x => x.row);
+}
+
 function buildNatFlags(filtered) {
-  const empRows = filtered.filter(r => hasEmployeeId(r));
+  // Deduplicate — each employee counted once using their latest payroll month
+  const empRows = dedupeByLatestMonth(filtered.filter(r => hasEmployeeId(r)));
   const groups  = groupBy(empRows.length ? empRows : filtered, 'Nationality Description');
   const sorted  = Object.entries(groups).sort((a,b) => b[1].length - a[1].length);
   const total   = empRows.length || sorted.reduce((s,[,v])=>s+v.length, 0);
@@ -1651,8 +1337,8 @@ function buildNatFlags(filtered) {
 }
 
 function buildDonut(canvasId, legendId, filtered, colName, palette) {
-  // Use employee-only rows for demographic counts
-  const empRows = filtered.filter(r => hasEmployeeId(r));
+  // Deduplicate — each employee counted once using their latest payroll month
+  const empRows = dedupeByLatestMonth(filtered.filter(r => hasEmployeeId(r)));
   const groups  = groupBy(empRows.length ? empRows : filtered, colName);
   const sorted  = Object.entries(groups).sort((a,b)=>b[1].length-a[1].length);
   const labels  = sorted.map(([k])=>k);
@@ -1731,12 +1417,23 @@ function populateDebug() {
   const headers   = Object.keys(sampleRow);
   const costEl = document.getElementById('debug-cost-col');
   if (costEl) costEl.textContent = COST_COL;
-  const dateEl = document.getElementById('debug-date-cols');
-  if (dateEl) {
-    const joinOk   = headers.includes(DATEJOIN_COL);
-    const resignOk = headers.includes(DATERESIGN_COL);
-    dateEl.textContent = `${DATEJOIN_COL} (${joinOk?'found':'NOT FOUND — check spelling'}) / ${DATERESIGN_COL} (${resignOk?'found':'NOT FOUND — check spelling'})`;
-    dateEl.style.color = (joinOk && resignOk) ? 'var(--gold-light)' : '#f87171';
+
+  // Show unrecognised Payroll Month values
+  const unrecognised = [...new Set(
+    RAW.hc.map(r => r['Payroll Month'])
+          .filter(v => {
+            if (!v) return false;
+            const { year, month } = parsePayrollMonth(v);
+            return !year || !month;
+          })
+  )].slice(0, 10);
+
+  const debugExtra = document.getElementById('debug-unrecognised');
+  if (debugExtra) {
+    debugExtra.innerHTML = unrecognised.length
+      ? `<p style="color:#f87171;margin-bottom:6px">⚠️ Unrecognised Payroll Month formats (${unrecognised.length} unique values — these rows are EXCLUDED from charts):</p>` +
+        unrecognised.map(v => `<div style="color:#fca5a5">"${v}"</div>`).join('')
+      : `<p style="color:#6ee7b7">✅ All Payroll Month values parsed successfully</p>`;
   }
 
   // Show all headers with index
