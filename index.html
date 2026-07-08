@@ -305,6 +305,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--s950);color:var(--text-pr
         <div id="debug-hc-sample" class="text-slate-300 space-y-0.5 max-h-64 overflow-y-auto"></div>
       </div>
     </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" style="margin-top:16px">
+      <div>
+        <p class="text-amber-400 mb-2">Exit Raw File — Headers &amp; sample row:</p>
+        <div id="debug-exit-headers" style="color:var(--text-secondary);max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;font-size:11px"></div>
+      </div>
+      <div>
+        <p class="text-amber-400 mb-2">New Hire Raw File — Headers &amp; sample row:</p>
+        <div id="debug-hire-headers" style="color:var(--text-secondary);max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;font-size:11px"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -796,12 +806,41 @@ function applyFilters() {
   const avgGrade = gradeAvgs.length ? gradeAvgs.reduce((s,g)=>s+g.avg,0)/gradeAvgs.length : 0;
 
   // Hires & Exits — apply company and outlet filters
-  const hiresFiltered = RAW.hires.filter(r =>
-    inFilter(f.company, r['Company Name']) && inFilter(f.outlet, r['Outlet'])
-  );
-  const exitsFiltered = RAW.exits.filter(r =>
-    inFilter(f.company, r['Company Name']) && inFilter(f.outlet, r['Outlet'])
-  );
+  // ── Hires & Exits — apply ALL active filters including year/month ──
+  // Exit/Hire files may use different date column names — try all common ones
+  function getRowDate(r) {
+    return r['Payroll Month'] || r['Date Resigned'] || r['Resignation Date'] ||
+           r['Exit Date']     || r['Date Joined']   || r['Join Date'] ||
+           r['Hire Date']     || r['Date Hired']    || '';
+  }
+
+  const hiresFiltered = RAW.hires.filter(r => {
+    if (!inFilter(f.company,  r['Company Name'])) return false;
+    if (!inFilter(f.outlet,   r['Outlet']))        return false;
+    if (!inFilter(f.category, r['Category Name'])) return false;
+    if (!inFilter(f.grade,    r['Job Grades']))    return false;
+    // Apply year/month filter against the row's date
+    if (f.year.length > 0 || f.month.length > 0) {
+      const { year, month } = parsePayrollMonth(getRowDate(r));
+      if (f.year.length  > 0 && !f.year.includes(year))   return false;
+      if (f.month.length > 0 && !f.month.includes(month)) return false;
+    }
+    return true;
+  });
+
+  const exitsFiltered = RAW.exits.filter(r => {
+    if (!inFilter(f.company,  r['Company Name'])) return false;
+    if (!inFilter(f.outlet,   r['Outlet']))        return false;
+    if (!inFilter(f.category, r['Category Name'])) return false;
+    if (!inFilter(f.grade,    r['Job Grades']))    return false;
+    // Apply year/month filter against the row's date
+    if (f.year.length > 0 || f.month.length > 0) {
+      const { year, month } = parsePayrollMonth(getRowDate(r));
+      if (f.year.length  > 0 && !f.year.includes(year))   return false;
+      if (f.month.length > 0 && !f.month.includes(month)) return false;
+    }
+    return true;
+  });
 
   // ── Update KPI DOM ──
   setKPI('kpi-payroll',    'RM ' + Math.round(totalPayroll).toLocaleString('en-MY'));
@@ -1442,12 +1481,35 @@ function populateDebug() {
     `<div class="flex gap-2"><span class="text-slate-500 w-6 text-right">${i}</span><span class="${h===COST_COL?'text-emerald-400 font-bold':''}${h==='Sum'&&h!==COST_COL?' text-amber-400':''}">${h}${h===COST_COL?' ← cost column':''}</span></div>`
   ).join('');
 
-  // Show sample values
-  document.getElementById('debug-hc-sample').innerHTML = headers.map((h, i) => {
-    const val = sampleRow[h] || '(empty)';
-    const isNumeric = !isNaN(val.replace(/,/g,'')) && val.trim() !== '';
-    return `<div class="flex gap-2"><span class="text-slate-500 w-6 text-right">${i}</span><span class="${isNumeric?'text-cyan-400':''}">${val}</span></div>`;
-  }).join('');
+  // Show exit file headers + sample
+  const exitEl = document.getElementById('debug-exit-headers');
+  if (exitEl && RAW.exits.length) {
+    const exitSample = RAW.exits[0];
+    const exitHeaders = Object.keys(exitSample);
+    const DATE_COLS = ['Payroll Month','Date Resigned','Resignation Date','Exit Date','Date Joined'];
+    exitEl.innerHTML = exitHeaders.map((h, i) => {
+      const val = exitSample[h] || '(empty)';
+      const isDate = DATE_COLS.includes(h);
+      return `<div style="display:flex;gap:8px"><span style="color:var(--text-muted);width:20px;text-align:right">${i}</span><span style="color:${isDate?'#C9A84C':'inherit'}">${h}${isDate?' ← date':''}: <span style="color:#7DD3C8">${val}</span></span></div>`;
+    }).join('');
+  } else if (exitEl) {
+    exitEl.innerHTML = '<span style="color:#f87171">No exit data loaded</span>';
+  }
+
+  // Show hire file headers + sample
+  const hireEl = document.getElementById('debug-hire-headers');
+  if (hireEl && RAW.hires.length) {
+    const hireSample = RAW.hires[0];
+    const hireHeaders = Object.keys(hireSample);
+    const DATE_COLS = ['Payroll Month','Date Joined','Join Date','Hire Date','Date Hired'];
+    hireEl.innerHTML = hireHeaders.map((h, i) => {
+      const val = hireSample[h] || '(empty)';
+      const isDate = DATE_COLS.includes(h);
+      return `<div style="display:flex;gap:8px"><span style="color:var(--text-muted);width:20px;text-align:right">${i}</span><span style="color:${isDate?'#C9A84C':'inherit'}">${h}${isDate?' ← date':''}: <span style="color:#7DD3C8">${val}</span></span></div>`;
+    }).join('');
+  } else if (hireEl) {
+    hireEl.innerHTML = '<span style="color:#f87171">No hire data loaded</span>';
+  }
 }
 
 // ══════════════════════════════════════════
