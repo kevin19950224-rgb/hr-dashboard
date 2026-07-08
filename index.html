@@ -186,13 +186,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--s950);color:var(--text-pr
       <div class="kpi-card p-4" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:12px">
         <p style="font-size:9px;font-family:'DM Mono',monospace;color:#34d399;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">New Hires</p>
         <p id="kpi-hires" style="font-size:22px;font-weight:600;color:#6ee7b7;line-height:1.1;font-family:'Playfair Display',serif">—</p>
-        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">From hire file</p>
+        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">By Date Joined</p>
       </div>
 
       <div class="kpi-card p-4" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px">
         <p style="font-size:9px;font-family:'DM Mono',monospace;color:#f87171;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Exited</p>
         <p id="kpi-exited" style="font-size:22px;font-weight:600;color:#fca5a5;line-height:1.1;font-family:'Playfair Display',serif">—</p>
-        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">From exit file</p>
+        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">By Date Resigned</p>
       </div>
 
     </div>
@@ -805,41 +805,27 @@ function applyFilters() {
   const topGrade = gradeAvgs.sort((a,b)=>b.avg-a.avg)[0];
   const avgGrade = gradeAvgs.length ? gradeAvgs.reduce((s,g)=>s+g.avg,0)/gradeAvgs.length : 0;
 
-  // Hires & Exits — apply company and outlet filters
-  // ── Hires & Exits — apply ALL active filters including year/month ──
-  // Exit/Hire files may use different date column names — try all common ones
-  function getRowDate(r) {
-    return r['Payroll Month'] || r['Date Resigned'] || r['Resignation Date'] ||
-           r['Exit Date']     || r['Date Joined']   || r['Join Date'] ||
-           r['Hire Date']     || r['Date Hired']    || '';
+  // ── New Hires & Exits — derived from HC Raw File 2 ──
+  // New Hire = unique employee whose Date Joined falls in the selected month/year
+  // Exit     = unique employee whose Date Resigned falls in the selected month/year
+  // Both use dedupedHC as the base so each employee is counted only once
+
+  function dateMatchesFilter(dateVal) {
+    if (!f.year.length && !f.month.length) return true; // no date filter active
+    const { year, month } = parsePayrollMonth(dateVal);
+    if (f.year.length  > 0 && !f.year.includes(year))   return false;
+    if (f.month.length > 0 && !f.month.includes(month)) return false;
+    return true;
   }
 
-  const hiresFiltered = RAW.hires.filter(r => {
-    if (!inFilter(f.company,  r['Company Name'])) return false;
-    if (!inFilter(f.outlet,   r['Outlet']))        return false;
-    if (!inFilter(f.category, r['Category Name'])) return false;
-    if (!inFilter(f.grade,    r['Job Grades']))    return false;
-    // Apply year/month filter against the row's date
-    if (f.year.length > 0 || f.month.length > 0) {
-      const { year, month } = parsePayrollMonth(getRowDate(r));
-      if (f.year.length  > 0 && !f.year.includes(year))   return false;
-      if (f.month.length > 0 && !f.month.includes(month)) return false;
-    }
-    return true;
+  const hiresFiltered = dedupedHC.filter(r => {
+    const joined = (r['Date Joined'] || '').trim();
+    return joined && dateMatchesFilter(joined);
   });
 
-  const exitsFiltered = RAW.exits.filter(r => {
-    if (!inFilter(f.company,  r['Company Name'])) return false;
-    if (!inFilter(f.outlet,   r['Outlet']))        return false;
-    if (!inFilter(f.category, r['Category Name'])) return false;
-    if (!inFilter(f.grade,    r['Job Grades']))    return false;
-    // Apply year/month filter against the row's date
-    if (f.year.length > 0 || f.month.length > 0) {
-      const { year, month } = parsePayrollMonth(getRowDate(r));
-      if (f.year.length  > 0 && !f.year.includes(year))   return false;
-      if (f.month.length > 0 && !f.month.includes(month)) return false;
-    }
-    return true;
+  const exitsFiltered = dedupedHC.filter(r => {
+    const resigned = (r['Date Resigned'] || '').trim();
+    return resigned && dateMatchesFilter(resigned);
   });
 
   // ── Update KPI DOM ──
