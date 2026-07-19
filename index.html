@@ -189,7 +189,8 @@ function scheduleSync(){
 
 window.addEventListener('DOMContentLoaded',DATA_LOADER);
 </script>
-// ══ SHARED JS ENGINE ══
+<script>
+
 const MONTH_NAMES={jan:'Jan',feb:'Feb',mar:'Mar',apr:'Apr',may:'May',jun:'Jun',jul:'Jul',aug:'Aug',sep:'Sep',oct:'Oct',nov:'Nov',dec:'Dec',january:'Jan',february:'Feb',march:'Mar',april:'Apr',june:'Jun',july:'Jul',august:'Aug',september:'Sep',october:'Oct',november:'Nov',december:'Dec','01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
 
 function parsePayrollMonth(val){
@@ -454,5 +455,6 @@ function buildDonut(cid,lid,rows,col,pal){
 
 function setSS(state){const d=document.getElementById('sdot'),l=document.getElementById('slbl');if(state==='live'){d.style.background='#C9A84C';l.textContent='Live';}else if(state==='sync'){d.style.background='#E8903A';l.textContent='Syncing…';}else{d.style.background='#ef4444';l.textContent='Error';}}
 function showErr(msg){const b=document.getElementById('errbanner'),m=document.getElementById('errmsg');if(b&&m){m.textContent=msg;b.style.display='flex';}}
+</script>
 </body>
 </html>
