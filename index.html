@@ -7,1536 +7,452 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<script>
-tailwind.config = {
-  darkMode: 'class',
-  theme: { extend: {
-    fontFamily: { sans: ['DM Sans','sans-serif'], mono: ['DM Mono','monospace'], display: ['Playfair Display','serif'] },
-    colors: {
-      gold:    { DEFAULT:'#C9A84C', light:'#E8C96A', dark:'#9A7530', muted:'#C9A84C22' },
-      stellar: { 950:'#0A0A0B', 900:'#111113', 800:'#18181C', 700:'#212127', 600:'#2A2A32', 500:'#38383F' }
-    }
-  }}
-}
-</script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['DM Sans','sans-serif'],mono:['DM Mono','monospace'],display:['Playfair Display','serif']}}}}</script>
 <style>
-:root {
-  --gold:#C9A84C; --gold-light:#E8C96A; --gold-muted:rgba(201,168,76,0.12);
-  --gold-border:rgba(201,168,76,0.25); --gold-border-strong:rgba(201,168,76,0.5);
-  --s950:#0A0A0B; --s900:#111113; --s800:#18181C; --s700:#212127; --s600:#2A2A32; --s500:#38383F;
-  --text-primary:#F5F0E8; --text-secondary:#A89880; --text-muted:#6B6258;
-}
+:root{--gold:#C9A84C;--gold-l:#E8C96A;--gold-m:rgba(201,168,76,.12);--gold-b:rgba(201,168,76,.25);--gold-bs:rgba(201,168,76,.5);--s95:#0A0A0B;--s90:#111113;--s80:#18181C;--s70:#212127;--s60:#2A2A32;--s50:#38383F;--tp:#F5F0E8;--ts:#A89880;--tm:#6B6258}
 *,*::before,*::after{box-sizing:border-box}
-body{font-family:'DM Sans',sans-serif;background:var(--s950);color:var(--text-primary)}
-/* KPI card hover */
-.kpi-card{transition:transform .18s ease,box-shadow .18s ease}
-.kpi-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(201,168,76,0.1)}
-/* Gold divider line */
-.gold-line{height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.35}
-/* Section labels */
-.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);opacity:.7}
-/* Animations */
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.fade-up{animation:fadeUp .35s ease forwards}
-@keyframes spin{to{transform:rotate(360deg)}}
-.spin{animation:spin 1s linear infinite}
-@keyframes pdot{0%,100%{opacity:1}50%{opacity:.25}}
-.pdot{animation:pdot 1.2s infinite}
-.pdot:nth-child(2){animation-delay:.2s}
-.pdot:nth-child(3){animation-delay:.4s}
-.data-flash{animation:fadeUp .4s ease}
-/* Scrollbar */
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-thumb{background:var(--s600);border-radius:99px}
-/* Star sparkle in logo */
-@keyframes sparkle{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
-.star-sparkle{animation:sparkle 2.4s ease-in-out infinite}
-/* ── Multi-select dropdown ── */
-.ms-wrap{position:relative;display:inline-block}
-.ms-btn{display:flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:6px;border:1px solid var(--gold-border);background:var(--s700);color:var(--text-secondary);font-size:11px;cursor:pointer;white-space:nowrap;user-select:none;transition:border-color .15s,color .15s}
-.ms-btn:hover{border-color:var(--gold-border-strong);color:var(--gold)}
-.ms-btn .ms-arrow{margin-left:2px;opacity:.5;transition:transform .2s}
-.ms-wrap.open .ms-arrow{transform:rotate(180deg)}
-.ms-wrap.open .ms-btn{border-color:var(--gold-border-strong);color:var(--gold)}
-.ms-count{background:var(--gold);color:#111;border-radius:99px;font-size:9px;font-weight:700;padding:1px 6px;font-family:'DM Mono',monospace}
-.ms-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:190px;max-width:270px;background:var(--s800);border:1px solid var(--gold-border);border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.6);z-index:100;overflow:hidden}
-.ms-wrap.open .ms-panel{display:block}
-.ms-search{width:100%;border:none;border-bottom:1px solid var(--s600);padding:8px 10px;font-size:11px;outline:none;background:transparent;color:var(--text-primary)}
-.ms-search::placeholder{color:var(--text-muted)}
-.ms-list{max-height:200px;overflow-y:auto;padding:4px}
-.ms-item{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:5px;font-size:11px;cursor:pointer;color:var(--text-secondary);transition:background .1s,color .1s}
-.ms-item:hover{background:var(--gold-muted);color:var(--gold-light)}
-.ms-item input[type=checkbox]{accent-color:var(--gold);width:13px;height:13px;flex-shrink:0}
-.ms-item.all-item{font-weight:600;border-bottom:1px solid var(--s600);margin-bottom:2px;padding-bottom:7px;color:var(--gold)}
-.ms-footer{padding:6px 8px;border-top:1px solid var(--s600);display:flex;justify-content:space-between;align-items:center}
-.ms-clear{font-size:10px;color:var(--text-muted);cursor:pointer;text-decoration:underline;background:none;border:none;padding:0}
-.ms-clear:hover{color:var(--gold)}
-.ms-apply{font-size:10px;background:var(--gold);color:#111;border:none;border-radius:5px;padding:3px 10px;cursor:pointer;font-weight:600}
-.ms-apply:hover{background:var(--gold-light)}
-/* Card base */
-.ss-card{background:var(--s800);border:1px solid var(--s600);border-radius:12px}
-.ss-card-gold{background:var(--s800);border:1px solid var(--gold-border);border-radius:12px}
-/* Sync pill */
-.sync-pill{background:var(--s700);border:1px solid var(--s500);border-radius:99px;padding:3px 10px;display:flex;align-items:center;gap:6px}
-/* Badge */
-.chart-badge{font-size:9px;font-family:'DM Mono',monospace;background:var(--s700);color:var(--text-muted);border:1px solid var(--s500);padding:2px 8px;border-radius:4px;letter-spacing:.08em}
+body{font-family:'DM Sans',sans-serif;background:var(--s95);color:var(--tp);min-height:100vh}
+.kc{transition:transform .18s ease,box-shadow .18s ease}.kc:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(201,168,76,.1)}
+.gl{height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.35}
+.sl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);opacity:.7}
+@keyframes fU{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fU .35s ease forwards}
+@keyframes sp{to{transform:rotate(360deg)}}.spin{animation:sp 1s linear infinite}
+@keyframes pd{0%,100%{opacity:1}50%{opacity:.25}}.pd{animation:pd 1.2s infinite}.pd:nth-child(2){animation-delay:.2s}.pd:nth-child(3){animation-delay:.4s}
+.df{animation:fU .4s ease}
+@keyframes sk{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}.sk{animation:sk 2.4s ease-in-out infinite}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:var(--s60);border-radius:99px}
+/* multi-select */
+.mw{position:relative;display:inline-block}
+.mb{display:flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:6px;border:1px solid var(--gold-b);background:var(--s70);color:var(--ts);font-size:11px;cursor:pointer;white-space:nowrap;user-select:none;transition:border-color .15s,color .15s}
+.mb:hover,.mw.op .mb{border-color:var(--gold-bs);color:var(--gold)}
+.ma{margin-left:2px;opacity:.5;transition:transform .2s}.mw.op .ma{transform:rotate(180deg)}
+.mc{background:var(--gold);color:#111;border-radius:99px;font-size:9px;font-weight:700;padding:1px 6px;font-family:'DM Mono',monospace}
+.mp{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:190px;max-width:270px;background:var(--s80);border:1px solid var(--gold-b);border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.6);z-index:100;overflow:hidden}
+.mw.op .mp{display:block}
+.ms-s{width:100%;border:none;border-bottom:1px solid var(--s60);padding:8px 10px;font-size:11px;outline:none;background:transparent;color:var(--tp)}
+.ms-s::placeholder{color:var(--tm)}
+.ml{max-height:200px;overflow-y:auto;padding:4px}
+.mi{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:5px;font-size:11px;cursor:pointer;color:var(--ts);transition:background .1s,color .1s}
+.mi:hover{background:var(--gold-m);color:var(--gold-l)}
+.mi input[type=checkbox]{accent-color:var(--gold);width:13px;height:13px;flex-shrink:0}
+.mi.ai{font-weight:600;border-bottom:1px solid var(--s60);margin-bottom:2px;padding-bottom:7px;color:var(--gold)}
+.mf{padding:6px 8px;border-top:1px solid var(--s60);display:flex;justify-content:space-between;align-items:center}
+.mcl{font-size:10px;color:var(--tm);cursor:pointer;text-decoration:underline;background:none;border:none;padding:0}
+.mcl:hover{color:var(--gold)}
+.map{font-size:10px;background:var(--gold);color:#111;border:none;border-radius:5px;padding:3px 10px;cursor:pointer;font-weight:600}
+.map:hover{background:var(--gold-l)}
+.sc{background:var(--s80);border:1px solid var(--s60);border-radius:12px}
+.sp2{background:var(--s70);border:1px solid var(--s50);border-radius:99px;padding:3px 10px;display:flex;align-items:center;gap:6px}
+.cb{font-size:9px;font-family:'DM Mono',monospace;background:var(--s70);color:var(--tm);border:1px solid var(--s50);padding:2px 8px;border-radius:4px;letter-spacing:.08em}
 </style>
 </head>
-<body style="background:var(--s950);color:var(--text-primary)" class="min-h-screen">
-
-<!-- ══ LOADING OVERLAY ══ -->
-<div id="overlay" class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4" style="background:var(--s950)">
+<body>
+<!-- OVERLAY -->
+<div id="overlay" style="position:fixed;inset:0;z-index:50;background:var(--s95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
   <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#C9A84C,#E8C96A);display:flex;align-items:center;justify-content:center">
-    <svg class="star-sparkle" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <svg class="sk" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
   </div>
-  <p style="font-family:'Playfair Display',serif;font-size:15px;color:var(--gold-light);letter-spacing:.04em">Stellar Signature</p>
-  <div class="flex gap-1.5">
-    <span class="pdot" style="width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block"></span>
-    <span class="pdot" style="width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block"></span>
-    <span class="pdot" style="width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block"></span>
-  </div>
-  <p id="overlay-msg" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted)">Fetching headcount data…</p>
+  <p style="font-family:'Playfair Display',serif;font-size:15px;color:var(--gold-l);letter-spacing:.04em">Stellar Signature</p>
+  <div style="display:flex;gap:6px"><span class="pd" style="width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block"></span><span class="pd" style="width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block"></span><span class="pd" style="width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block"></span></div>
+  <p id="ovmsg" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--tm)">Loading…</p>
 </div>
-
-<!-- ══ ERROR BANNER ══ -->
-<div id="err-banner" class="hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 px-6 py-2" style="background:#7c2020;font-size:11px;font-family:'DM Mono',monospace;color:#fecaca">
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-  <span id="err-msg">Connection error</span>
-  <button onclick="document.getElementById('err-banner').classList.add('hidden')" style="margin-left:auto;text-decoration:underline;background:none;border:none;color:inherit;cursor:pointer">Dismiss</button>
+<!-- ERROR -->
+<div id="errbanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:40;background:#7c2020;font-size:11px;font-family:'DM Mono',monospace;color:#fecaca;padding:6px 24px;display:none;align-items:center;gap:12px">
+  <span id="errmsg">Error</span>
+  <button onclick="document.getElementById('errbanner').style.display='none'" style="margin-left:auto;text-decoration:underline;background:none;border:none;color:inherit;cursor:pointer">Dismiss</button>
 </div>
-
-<!-- ══ TOP NAV ══ -->
-<header class="sticky top-0 z-30 px-5 py-3" style="background:rgba(10,10,11,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--gold-border)">
-  <div class="max-w-screen-2xl mx-auto flex items-center gap-3 flex-wrap">
-
-    <!-- Logo -->
-    <div class="flex items-center gap-3 flex-shrink-0">
-      <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#C9A84C,#E8C96A);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <svg class="star-sparkle" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+<!-- HEADER -->
+<header style="position:sticky;top:0;z-index:30;background:rgba(10,10,11,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--gold-b);padding:10px 20px">
+  <div style="max-width:1600px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+      <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#C9A84C,#E8C96A);display:flex;align-items:center;justify-content:center">
+        <svg class="sk" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       </div>
       <div>
-        <p style="font-family:'Playfair Display',serif;font-size:14px;color:var(--gold-light);line-height:1;letter-spacing:.03em">Stellar Signature</p>
-        <p style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted);margin-top:3px;letter-spacing:.1em">WORKFORCE INTELLIGENCE</p>
+        <p style="font-family:'Playfair Display',serif;font-size:14px;color:var(--gold-l);line-height:1;letter-spacing:.03em">Stellar Signature</p>
+        <p style="font-family:'DM Mono',monospace;font-size:9px;color:var(--tm);margin-top:3px;letter-spacing:.1em">WORKFORCE INTELLIGENCE</p>
       </div>
     </div>
-
-    <!-- Gold divider -->
-    <div style="width:1px;height:28px;background:var(--gold-border);flex-shrink:0"></div>
-
-    <!-- Sync status -->
-    <div class="sync-pill flex-shrink-0">
-      <span id="sync-dot" style="width:6px;height:6px;border-radius:50%;background:#555;flex-shrink:0;display:inline-block"></span>
-      <span id="sync-label" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text-muted)">Connecting…</span>
-    </div>
-
-    <!-- FILTERS -->
-    <div class="flex flex-wrap items-center gap-2 flex-1" id="filter-bar">
-      <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted);font-style:italic">Loading filters…</span>
-    </div>
-
-    <!-- Refresh + theme buttons -->
-    <div class="flex items-center gap-2 flex-shrink-0">
-      <button onclick="fetchAllSheets()" title="Refresh now" style="width:32px;height:32px;border-radius:6px;border:1px solid var(--gold-border);background:var(--s700);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);transition:border-color .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--gold-border)'">
-        <svg id="refresh-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-      </button>
-    </div>
+    <div style="width:1px;height:28px;background:var(--gold-b);flex-shrink:0"></div>
+    <div class="sp2" style="flex-shrink:0"><span id="sdot" style="width:6px;height:6px;border-radius:50%;background:#555;display:inline-block"></span><span id="slbl" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--tm)">Connecting…</span></div>
+    <div id="filterbar" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;flex:1"><span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--tm);font-style:italic">Loading…</span></div>
+    <button onclick="DATA_LOADER()" style="width:32px;height:32px;border-radius:6px;border:1px solid var(--gold-b);background:var(--s70);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tm)" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--gold-b)'">
+      <svg id="ricon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    </button>
   </div>
 </header>
-
-<main class="max-w-screen-2xl mx-auto px-5 py-6 space-y-7">
-
-  <!-- ── PANEL 1: KPI CARDS ── -->
+<main style="max-width:1600px;margin:0 auto;padding:24px 20px;display:flex;flex-direction:column;gap:28px">
+  <!-- KPIs -->
   <section>
-    <p class="section-label mb-3">Workforce Summary</p>
-    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-
-      <div class="kpi-card ss-card p-4">
-        <p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Total Payroll</p>
-        <p id="kpi-payroll" style="font-size:17px;font-weight:600;color:var(--gold-light);line-height:1.1">—</p>
-        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">Gross payroll</p>
-      </div>
-
-      <div class="kpi-card ss-card p-4">
-        <p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Avg Manpower</p>
-        <p id="kpi-avg-mp" style="font-size:17px;font-weight:600;color:var(--gold-light);line-height:1.1">—</p>
-        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">Per headcount</p>
-      </div>
-
-      <div class="kpi-card ss-card p-4">
-        <p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Avg / Category</p>
-        <p id="kpi-avg-cat" style="font-size:17px;font-weight:600;color:var(--gold-light);line-height:1.1">—</p>
-        <p id="kpi-avg-cat-label" style="font-size:10px;margin-top:6px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">By category</p>
-      </div>
-
-      <div class="kpi-card ss-card p-4">
-        <p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Avg / Job Grade</p>
-        <p id="kpi-avg-grade" style="font-size:17px;font-weight:600;color:var(--gold-light);line-height:1.1">—</p>
-        <p id="kpi-avg-grade-label" style="font-size:10px;margin-top:6px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">By job grade</p>
-      </div>
-
-      <div class="kpi-card p-4" style="background:var(--gold-muted);border:1px solid var(--gold-border);border-radius:12px">
-        <p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Active Accounts</p>
-        <p id="kpi-active" style="font-size:22px;font-weight:600;color:var(--gold-light);line-height:1.1;font-family:'Playfair Display',serif">—</p>
-        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">Employees only</p>
-      </div>
-
-      <div class="kpi-card p-4" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:12px">
-        <p style="font-size:9px;font-family:'DM Mono',monospace;color:#34d399;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">New Hires</p>
-        <p id="kpi-hires" style="font-size:22px;font-weight:600;color:#6ee7b7;line-height:1.1;font-family:'Playfair Display',serif">—</p>
-        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">By Date Joined</p>
-      </div>
-
-      <div class="kpi-card p-4" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px">
-        <p style="font-size:9px;font-family:'DM Mono',monospace;color:#f87171;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Exited</p>
-        <p id="kpi-exited" style="font-size:22px;font-weight:600;color:#fca5a5;line-height:1.1;font-family:'Playfair Display',serif">—</p>
-        <p style="font-size:10px;margin-top:6px;color:var(--text-muted)">By Date Resigned</p>
-      </div>
-
+    <p class="sl" style="margin-bottom:12px">Workforce Summary</p>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:12px">
+      <div class="kc sc" style="padding:16px"><p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--tm);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Total Payroll</p><p id="kpi-payroll" style="font-size:17px;font-weight:600;color:var(--gold-l)">—</p><p style="font-size:10px;margin-top:6px;color:var(--tm)">Gross payroll</p></div>
+      <div class="kc sc" style="padding:16px"><p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--tm);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Avg Manpower</p><p id="kpi-avg-mp" style="font-size:17px;font-weight:600;color:var(--gold-l)">—</p><p style="font-size:10px;margin-top:6px;color:var(--tm)">Per headcount</p></div>
+      <div class="kc sc" style="padding:16px"><p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--tm);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Avg / Category</p><p id="kpi-avg-cat" style="font-size:17px;font-weight:600;color:var(--gold-l)">—</p><p id="kpi-avg-cat-lbl" style="font-size:10px;margin-top:6px;color:var(--tm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">By category</p></div>
+      <div class="kc sc" style="padding:16px"><p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--tm);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Avg / Job Grade</p><p id="kpi-avg-grade" style="font-size:17px;font-weight:600;color:var(--gold-l)">—</p><p id="kpi-avg-grade-lbl" style="font-size:10px;margin-top:6px;color:var(--tm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">By grade</p></div>
+      <div class="kc" style="padding:16px;background:var(--gold-m);border:1px solid var(--gold-b);border-radius:12px"><p style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Active Accounts</p><p id="kpi-active" style="font-size:22px;font-weight:600;color:var(--gold-l);font-family:'Playfair Display',serif">—</p><p style="font-size:10px;margin-top:6px;color:var(--tm)">Employees only</p></div>
+      <div class="kc" style="padding:16px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:12px"><p style="font-size:9px;font-family:'DM Mono',monospace;color:#34d399;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">New Hires</p><p id="kpi-hires" style="font-size:22px;font-weight:600;color:#6ee7b7;font-family:'Playfair Display',serif">—</p><p style="font-size:10px;margin-top:6px;color:var(--tm)">By Date Joined</p></div>
+      <div class="kc" style="padding:16px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:12px"><p style="font-size:9px;font-family:'DM Mono',monospace;color:#f87171;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Exited</p><p id="kpi-exited" style="font-size:22px;font-weight:600;color:#fca5a5;font-family:'Playfair Display',serif">—</p><p style="font-size:10px;margin-top:6px;color:var(--tm)">By Date Resigned</p></div>
     </div>
   </section>
-
-  <div class="gold-line"></div>
-
-  <!-- ── PANEL 2: COST CHARTS ── -->
+  <div class="gl"></div>
+  <!-- COST CHARTS -->
   <section>
-    <p class="section-label mb-3">Cost Analysis</p>
-    <div class="flex flex-col gap-4">
-
-      <!-- Total Payroll — full width -->
-      <div class="ss-card p-5">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <p style="font-size:13px;font-weight:500;color:var(--text-primary)">Total Payroll Cost</p>
-            <p style="font-size:11px;color:var(--text-muted);margin-top:2px">Bars · Trend line · Month-over-month change</p>
-          </div>
-          <span class="chart-badge">BAR + MoM</span>
+    <p class="sl" style="margin-bottom:12px">Cost Analysis</p>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="sc" style="padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div><p style="font-size:13px;font-weight:500;color:var(--tp)">Total Payroll Cost</p><p style="font-size:11px;color:var(--tm);margin-top:2px">Bars · Trend · Month-over-month change</p></div>
+          <span class="cb">BAR + MoM</span>
         </div>
-        <div style="position:relative;height:300px;width:100%">
-          <canvas id="chart-trend" role="img" aria-label="Monthly payroll cost trend chart"></canvas>
-        </div>
+        <div id="trend-wrap" style="position:relative;height:300px;width:100%"><canvas id="chart-trend"></canvas></div>
       </div>
-
-      <!-- Outlet avg cost — full width -->
-      <div class="ss-card p-5">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <p style="font-size:13px;font-weight:500;color:var(--text-primary)">Avg Cost per Headcount by Outlet</p>
-            <p style="font-size:11px;color:var(--text-muted);margin-top:2px">Average payroll per person</p>
-          </div>
-          <span class="chart-badge">BAR</span>
+      <div class="sc" style="padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div><p style="font-size:13px;font-weight:500;color:var(--tp)">Avg Cost per Headcount by Outlet</p><p style="font-size:11px;color:var(--tm);margin-top:2px">Average payroll per person</p></div>
+          <span class="cb">BAR</span>
         </div>
-        <div style="position:relative;height:300px;width:100%">
-          <canvas id="chart-outlet" role="img" aria-label="Average payroll cost by outlet"></canvas>
-        </div>
+        <div id="outlet-wrap" style="position:relative;height:300px;width:100%"><canvas id="chart-outlet"></canvas></div>
       </div>
-
     </div>
   </section>
-
-  <div class="gold-line"></div>
-
-  <!-- ── PANEL 3: DEMOGRAPHICS ── -->
+  <div class="gl"></div>
+  <!-- DEMOGRAPHICS -->
   <section>
-    <p class="section-label mb-3">Demographics & Employment</p>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-      <div class="ss-card p-5">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <p style="font-size:13px;font-weight:500;color:var(--text-primary)">Nationality Breakdown</p>
-            <p style="font-size:11px;color:var(--text-muted);margin-top:2px">Headcount by nationality</p>
-          </div>
-          <span class="chart-badge">FLAGS</span>
-        </div>
-        <div id="nat-flags-grid" class="grid grid-cols-2 gap-3"></div>
+    <p class="sl" style="margin-bottom:12px">Demographics & Employment</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="sc" style="padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><div><p style="font-size:13px;font-weight:500;color:var(--tp)">Nationality Breakdown</p><p style="font-size:11px;color:var(--tm);margin-top:2px">Unique headcount by nationality</p></div><span class="cb">FLAGS</span></div>
+        <div id="natgrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px"></div>
       </div>
-
-      <div class="ss-card p-5">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <p style="font-size:13px;font-weight:500;color:var(--text-primary)">Citizenship Type</p>
-            <p style="font-size:11px;color:var(--text-muted);margin-top:2px">From Citizenship Description column</p>
-          </div>
-          <span class="chart-badge">DONUT</span>
-        </div>
-        <div class="flex items-center gap-5">
-          <div style="position:relative;height:175px;width:175px;flex-shrink:0">
-            <canvas id="chart-cit" role="img" aria-label="Citizenship type donut chart"></canvas>
-          </div>
-          <div id="legend-cit" class="space-y-2 text-xs flex-1 min-w-0"></div>
+      <div class="sc" style="padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><div><p style="font-size:13px;font-weight:500;color:var(--tp)">Citizenship Type</p><p style="font-size:11px;color:var(--tm);margin-top:2px">Citizenship Description column</p></div><span class="cb">DONUT</span></div>
+        <div style="display:flex;align-items:center;gap:20px">
+          <div style="position:relative;height:175px;width:175px;flex-shrink:0"><canvas id="chart-cit"></canvas></div>
+          <div id="legend-cit" style="flex:1;min-width:0"></div>
         </div>
       </div>
-
     </div>
   </section>
-
 </main>
-
-<footer class="max-w-screen-2xl mx-auto px-5 py-4 flex items-center justify-between" style="border-top:1px solid var(--gold-border)">
-  <div class="flex items-center gap-2">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-    <span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text-muted)">STELLAR SIGNATURE · WORKFORCE INTELLIGENCE</span>
-  </div>
-  <div class="flex items-center gap-3">
-    <button onclick="toggleDebug()" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text-muted);background:none;border:none;cursor:pointer;text-decoration:underline">🔧 Debug columns</button>
-    <span id="footer-sync" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text-muted)">Auto-refreshes every 60s</span>
-  </div>
+<footer style="max-width:1600px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--gold-b)">
+  <div style="display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--tm)">STELLAR SIGNATURE · WORKFORCE INTELLIGENCE</span></div>
+  <span id="fsync" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--tm)">Loading…</span>
 </footer>
-
-<!-- DEBUG PANEL -->
-<div id="debug-panel" class="hidden max-w-screen-2xl mx-auto px-5 pb-8">
-  <div style="background:var(--s800);border:1px solid var(--gold-border);border-radius:12px;padding:20px;font-family:'DM Mono',monospace;font-size:11px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <p style="color:var(--gold);font-weight:600">🔧 Column Debug — What your sheet actually sent</p>
-      <button onclick="toggleDebug()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px">✕</button>
-    </div>
-    <p style="color:var(--text-muted);margin-bottom:12px">Auto-detected cost column: <span id="debug-cost-col" style="color:var(--gold-light);font-weight:700">detecting…</span></p>
-    <div id="debug-unrecognised" style="margin-bottom:14px;padding:10px;background:var(--s900);border-radius:6px;font-size:11px"></div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <p class="text-amber-400 mb-2">HC Raw File 2 — First row column headers:</p>
-        <div id="debug-hc-headers" class="text-slate-300 space-y-0.5 max-h-64 overflow-y-auto"></div>
-      </div>
-      <div>
-        <p class="text-amber-400 mb-2">HC Raw File 2 — First data row (sample values):</p>
-        <div id="debug-hc-sample" class="text-slate-300 space-y-0.5 max-h-64 overflow-y-auto"></div>
-      </div>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" style="margin-top:16px">
-      <div>
-        <p class="text-amber-400 mb-2">Exit Raw File — Headers &amp; sample row:</p>
-        <div id="debug-exit-headers" style="color:var(--text-secondary);max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;font-size:11px"></div>
-      </div>
-      <div>
-        <p class="text-amber-400 mb-2">New Hire Raw File — Headers &amp; sample row:</p>
-        <div id="debug-hire-headers" style="color:var(--text-secondary);max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;font-size:11px"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
-// ══════════════════════════════════════════
-//  CONFIG — Your Google Sheets credentials
-// ══════════════════════════════════════════
-const SHEET_ID      = '1S6IS_jM1yZo60dq8IUYYU24WqLS7JnGlMfVWUjIZ2TI';
-const API_KEY       = 'AIzaSyCfUDtFPcpGdCR4-mcL03K4NkUs70akayU';
-const CLAUDE_API_KEY = 'YOUR_CLAUDE_API_KEY_HERE'; // ← Paste your Anthropic API key here
-const TABS      = {
-  hc:    'HC Raw File 2',
-  hires: 'New Hire Raw File',
-  exits: 'Exit Raw File'
-};
-// ══════════════════════════════════════════
-//  SMART SYNC SCHEDULER
-//  Syncs once at 6:00am KL time (UTC+8) daily.
-//  Also syncs immediately if no sync has happened today yet.
-//  Manual refresh button always forces a sync.
-// ══════════════════════════════════════════
-const KL_OFFSET_MS = 8 * 60 * 60 * 1000; // UTC+8
+// ══ GITHUB PAGES CONFIG ══
+const SHEET_ID='1S6IS_jM1yZo60dq8IUYYU24WqLS7JnGlMfVWUjIZ2TI';
+const API_KEY='AIzaSyCfUDtFPcpGdCR4-mcL03K4NkUs70akayU';
+const TAB_HC='HC Raw File 2';
+let RAW={hc:[],hires:[],exits:[]};
+let COST_COL='Sum';
 
-function getKLDate() {
-  return new Date(Date.now() + KL_OFFSET_MS);
+async function fetchTab(tab){
+  const url=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tab)}?key=${API_KEY}`;
+  const res=await fetch(url);
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||res.statusText);}
+  const j=await res.json();const rows=j.values||[];if(rows.length<2)return[];
+  const hdrs=rows[0].map(h=>h.trim());
+  return rows.slice(1).map(row=>{const o={};hdrs.forEach((h,i)=>{o[h]=(row[i]||'').trim();});return o;});
 }
 
-function todayKLString() {
-  const d = getKLDate();
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
-}
-
-function hasAlreadySyncedToday() {
-  try {
-    return localStorage.getItem('ss_last_sync_date') === todayKLString();
-  } catch(e) { return false; }
-}
-
-function markSyncedToday() {
-  try { localStorage.setItem('ss_last_sync_date', todayKLString()); } catch(e) {}
-}
-
-function msUntilNext6amKL() {
-  const now = getKLDate();
-  const next6am = new Date(Date.UTC(
-    now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), // KL date
-    6 - 8 + 24, 0, 0, 0 // 6am KL = 22:00 UTC previous day... simpler:
-  ));
-  // Build next 6am KL as a UTC timestamp
-  const klNowMs   = Date.now() + KL_OFFSET_MS;
-  const klMidnight = klNowMs - (klNowMs % 86400000); // floor to midnight UTC = midnight KL is offset
-  const kl6amToday = klMidnight + 6 * 3600 * 1000;   // 6am in KL milliseconds (relative)
-  const utc6amToday = kl6amToday - KL_OFFSET_MS;      // convert back to UTC
-  const utc6amTomorrow = utc6amToday + 86400000;
-  const msUntil = Date.now() < utc6amToday ? utc6amToday - Date.now() : utc6amTomorrow - Date.now();
-  return msUntil;
-}
-
-function scheduleNextSync() {
-  const ms = msUntilNext6amKL();
-  const hh = Math.floor(ms / 3600000);
-  const mm = Math.floor((ms % 3600000) / 60000);
-  console.log(`Next auto-sync in ${hh}h ${mm}m (6:00am KL)`);
-  document.getElementById('footer-sync').textContent = `Next sync: 6:00am KL (~${hh}h ${mm}m)`;
-  setTimeout(async () => {
-    await fetchAllSheets();
-    markSyncedToday();
-    scheduleNextSync(); // schedule the next day's sync
-  }, ms);
-}
-
-// ══════════════════════════════════════════
-//  GLOBAL STATE
-// ══════════════════════════════════════════
-let RAW = { hc: [], hires: [], exits: [] };
-let COST_COL = 'Sum'; // auto-detected after first fetch
-let CHARTS = {};
-let isDark = true; // Stellar Signature always uses the premium dark theme
-
-// Design is always Stellar Signature dark — no toggle needed
-
-
-// ══════════════════════════════════════════
-//  GOOGLE SHEETS FETCH
-// ══════════════════════════════════════════
-async function fetchSheet(tabName) {
-  const encoded = encodeURIComponent(tabName);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encoded}?key=${API_KEY}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    const err = await res.json().catch(()=>({error:{message:res.statusText}}));
-    throw new Error(err.error?.message || res.statusText);
-  }
-  const json = await res.json();
-  const rows = json.values || [];
-  if (rows.length < 2) return [];
-  const headers = rows[0].map(h => h.trim());
-  return rows.slice(1).map(row => {
-    const obj = {};
-    headers.forEach((h, i) => { obj[h] = (row[i] || '').trim(); });
-    return obj;
-  });
-}
-
-function setOverlayMsg(msg) {
-  document.getElementById('overlay-msg').textContent = msg;
-}
-
-async function fetchAllSheets() {
-  // Spin the refresh icon
-  const ri = document.getElementById('refresh-icon');
-  ri.classList.add('spin');
-  setSyncStatus('syncing');
-
-  try {
-    setOverlayMsg('Fetching headcount data…');
-    RAW.hc    = await fetchSheet(TABS.hc);
-    COST_COL  = detectCostColumn(RAW.hc);
-    console.log('Using cost column:', COST_COL);
-    setOverlayMsg('Fetching new hire records…');
-    RAW.hires = await fetchSheet(TABS.hires);
-    setOverlayMsg('Fetching exit records…');
-    RAW.exits = await fetchSheet(TABS.exits);
-
-    populateFilters();
+async function DATA_LOADER(){
+  const ri=document.getElementById('ricon');ri.classList.add('spin');setSS('sync');
+  document.getElementById('ovmsg').textContent='Reading Google Sheet…';
+  try{
+    RAW.hc=await fetchTab(TAB_HC);
+    COST_COL=detectCostCol(RAW.hc);
+    populateFilters(RAW.hc);
     applyFilters();
-    setSyncStatus('live');
-    document.getElementById('footer-sync').textContent = 'Last synced: ' + new Date().toLocaleTimeString('en-MY', {timeZone:'Asia/Kuala_Lumpur', hour:'2-digit', minute:'2-digit'}) + ' KL';
-    document.getElementById('overlay').style.display = 'none';
-
-  } catch(e) {
-    setSyncStatus('error');
-    showError('Could not connect to Google Sheets: ' + e.message + '. Check your API key and Sheet sharing settings.');
-    document.getElementById('overlay').style.display = 'none';
-    console.error(e);
-  } finally {
-    ri.classList.remove('spin');
-  }
+    setSS('live');
+    document.getElementById('overlay').style.display='none';
+    const now=new Date();
+    document.getElementById('fsync').textContent='Synced: '+now.toLocaleTimeString('en-MY',{timeZone:'Asia/Kuala_Lumpur',hour:'2-digit',minute:'2-digit'})+' KL';
+    scheduleSync();
+  }catch(e){
+    showErr('Google Sheets error: '+e.message+'. Check API key & sharing.');
+    setSS('error');
+    document.getElementById('overlay').style.display='none';
+  }finally{ri.classList.remove('spin');}
 }
 
-// ══════════════════════════════════════════
-//  STATUS HELPERS
-// ══════════════════════════════════════════
-function setSyncStatus(state) {
-  const dot   = document.getElementById('sync-dot');
-  const label = document.getElementById('sync-label');
-  if (state === 'live')    { dot.className='w-1.5 h-1.5 rounded-full bg-emerald-400'; label.textContent='Live'; }
-  if (state === 'syncing') { dot.className='w-1.5 h-1.5 rounded-full bg-amber-400';   label.textContent='Syncing…'; }
-  if (state === 'error')   { dot.className='w-1.5 h-1.5 rounded-full bg-rose-400';    label.textContent='Error'; }
+// 6am KL auto-sync
+function scheduleSync(){
+  const KL=8*3600000,now=Date.now(),klNow=now+KL,klMid=klNow-klNow%86400000,utc6=klMid+6*3600000-KL;
+  const ms=now<utc6?utc6-now:utc6+86400000-now;
+  const hh=Math.floor(ms/3600000),mm=Math.floor((ms%3600000)/60000);
+  document.getElementById('fsync').textContent=`Next sync: 6:00am KL (~${hh}h${mm}m)`;
+  setTimeout(()=>{DATA_LOADER();},ms);
 }
 
-function showError(msg) {
-  document.getElementById('err-msg').textContent = msg;
-  document.getElementById('err-banner').classList.remove('hidden');
+window.addEventListener('DOMContentLoaded',DATA_LOADER);
+</script>
+// ══ SHARED JS ENGINE ══
+const MONTH_NAMES={jan:'Jan',feb:'Feb',mar:'Mar',apr:'Apr',may:'May',jun:'Jun',jul:'Jul',aug:'Aug',sep:'Sep',oct:'Oct',nov:'Nov',dec:'Dec',january:'Jan',february:'Feb',march:'Mar',april:'Apr',june:'Jun',july:'Jul',august:'Aug',september:'Sep',october:'Oct',november:'Nov',december:'Dec','01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
+
+function parsePayrollMonth(val){
+  if(!val) return {year:null,month:null};
+  val=String(val).trim();
+  if(/^\d{5}$/.test(val)){const d=new Date((parseInt(val)-25569)*86400*1000);if(!isNaN(d)) return {year:d.getUTCFullYear().toString(),month:MONTH_NAMES[String(d.getUTCMonth()+1).padStart(2,'0')]||null};}
+  const mI=val.match(/^(\d{4})-(\d{2})-\d{2}/);if(mI) return {year:mI[1],month:MONTH_NAMES[mI[2]]||null};
+  const mA=val.match(/^([A-Za-z]+)[\s\-\/](\d{2,4})$/);if(mA){const m=MONTH_NAMES[mA[1].toLowerCase()]||null,y=mA[2].length===2?'20'+mA[2]:mA[2];return {year:y,month:m};}
+  const mY=val.match(/^(\d{4})[\-\/](\d{1,2})$/);if(mY) return {year:mY[1],month:MONTH_NAMES[mY[2].padStart(2,'0')]||null};
+  const mM=val.match(/^(\d{1,2})[\-\/](\d{4})$/);if(mM) return {year:mM[2],month:MONTH_NAMES[mM[1].padStart(2,'0')]||null};
+  const mF=val.match(/^([A-Za-z]+)[\s\-](\d{4})$/);if(mF) return {year:mF[2],month:MONTH_NAMES[mF[1].toLowerCase()]||null};
+  const mN=val.match(/^([A-Za-z]+)(\d{2,4})$/);if(mN){const m=MONTH_NAMES[mN[1].toLowerCase()]||null,y=mN[2].length===2?'20'+mN[2]:mN[2];return {year:y,month:m};}
+  return {year:null,month:null};
 }
 
-// ══════════════════════════════════════════
-//  PAYROLL MONTH PARSER
-//  Handles: "Dec-25", "Dec-2025", "Jan 2025",
-//           "2025-01", "01/2025", "December 2025"
-// ══════════════════════════════════════════
-const MONTH_NAMES = {
-  jan:'Jan', feb:'Feb', mar:'Mar', apr:'Apr', may:'May', jun:'Jun',
-  jul:'Jul', aug:'Aug', sep:'Sep', oct:'Oct', nov:'Nov', dec:'Dec',
-  january:'Jan', february:'Feb', march:'Mar', april:'Apr', june:'Jun',
-  july:'Jul', august:'Aug', september:'Sep', october:'Oct', november:'Nov', december:'Dec',
-  '01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun',
-  '07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'
-};
+function toNum(v){if(!v)return 0;return parseFloat(String(v).replace(/[^0-9.\-]/g,''))||0;}
+function hasEmpId(r){return (r['Employee No']||'').trim()!=='';}
+function groupBy(arr,key){return arr.reduce((a,r)=>{const k=r[key]||'Unknown';if(!a[k])a[k]=[];a[k].push(r);return a;},{});}
+function inF(arr,val){return arr.length===0||arr.includes(val);}
 
-function parsePayrollMonth(val) {
-  if (!val) return { year: null, month: null };
-  val = String(val).trim();
-
-  // ── Handle Excel/Sheets serial date number (e.g. 45748) ──
-  // Excel epoch: Jan 1 1900 = 1 (with leap year bug, so offset = 25569 days to Unix epoch)
-  if (/^\d{5}$/.test(val)) {
-    const d = new Date((parseInt(val) - 25569) * 86400 * 1000);
-    if (!isNaN(d)) {
-      const yr = d.getUTCFullYear().toString();
-      const mn = MONTH_NAMES[String(d.getUTCMonth() + 1).padStart(2,'0')] || null;
-      return { year: yr, month: mn };
-    }
-  }
-
-  // ── Handle ISO date string "2026-04-01" or "2026-04-01T00:00:00.000Z" ──
-  const mISO = val.match(/^(\d{4})-(\d{2})-\d{2}/);
-  if (mISO) {
-    return { year: mISO[1], month: MONTH_NAMES[mISO[2]] || null };
-  }
-
-  // ── Handle "Apr-26" or "Apr-2026" or "Apr 26" or "Apr 2026" ──
-  const mAlpha = val.match(/^([A-Za-z]+)[\s\-\/](\d{2,4})$/);
-  if (mAlpha) {
-    const mKey = mAlpha[1].toLowerCase();
-    const yRaw = mAlpha[2];
-    const month = MONTH_NAMES[mKey] || null;
-    const year  = yRaw.length === 2 ? '20' + yRaw : yRaw;
-    return { year, month };
-  }
-
-  // ── Handle "2026-04" or "2026/04" ──
-  const mNumYM = val.match(/^(\d{4})[\-\/](\d{1,2})$/);
-  if (mNumYM) {
-    return { year: mNumYM[1], month: MONTH_NAMES[mNumYM[2].padStart(2,'0')] || null };
-  }
-
-  // ── Handle "04/2026" or "04-2026" ──
-  const mNumMY = val.match(/^(\d{1,2})[\-\/](\d{4})$/);
-  if (mNumMY) {
-    return { year: mNumMY[2], month: MONTH_NAMES[mNumMY[1].padStart(2,'0')] || null };
-  }
-
-  // ── Handle "April 2026" or "April-2026" ──
-  const mFull = val.match(/^([A-Za-z]+)[\s\-](\d{4})$/);
-  if (mFull) {
-    return { year: mFull[2], month: MONTH_NAMES[mFull[1].toLowerCase()] || null };
-  }
-
-  // ── Handle "Apr26" with no separator ──
-  const mNoSep = val.match(/^([A-Za-z]+)(\d{2,4})$/);
-  if (mNoSep) {
-    const mKey = mNoSep[1].toLowerCase();
-    const yRaw = mNoSep[2];
-    const month = MONTH_NAMES[mKey] || null;
-    const year  = yRaw.length === 2 ? '20' + yRaw : yRaw;
-    return { year, month };
-  }
-
-  // ── Unrecognised — log it so you can see what format Google Sheets is sending ──
-  if (val && val !== 'Payroll Month') {
-    console.warn(`[parsePayrollMonth] Unrecognised format: "${val}" — add this to the parser if needed`);
-  }
-
-  return { year: null, month: null };
-}
-
-// ══════════════════════════════════════════
-//  POPULATE FILTER DROPDOWNS FROM REAL DATA
-// ══════════════════════════════════════════
-// ══════════════════════════════════════════
-//  MULTI-SELECT FILTER SYSTEM
-// ══════════════════════════════════════════
-const FILTER_STATE = { year:[], month:[], company:[], outlet:[], category:[], grade:[] };
-
-const FILTER_CFG = [
-  { id:'year',     label:'Year',       col:null },
-  { id:'month',    label:'Month',      col:null },
-  { id:'company',  label:'Company',    col:'Company Name' },
-  { id:'outlet',   label:'Outlet',     col:'Outlet' },
-  { id:'category', label:'Category',   col:'Category Name' },
-  { id:'grade',    label:'Job Grade',  col:'Job Grades' },
-];
-
-function buildMultiSelect(id, label, options) {
-  const wrap = document.createElement('div');
-  wrap.className = 'ms-wrap';
-  wrap.id = 'ms-' + id;
-  wrap.innerHTML = `
-    <div class="ms-btn" onclick="toggleMS('${id}')">
-      <span class="ms-label">${label}</span>
-      <span class="ms-count" id="ms-count-${id}" style="display:none">0</span>
-      <svg class="ms-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-    </div>
-    <div class="ms-panel" id="ms-panel-${id}">
-      <input class="ms-search" placeholder="Search…" oninput="searchMS('${id}', this.value)" />
-      <div class="ms-list" id="ms-list-${id}">
-        <label class="ms-item all-item">
-          <input type="checkbox" id="ms-all-${id}" checked onchange="toggleAllMS('${id}', this.checked)" /> All
-        </label>
-        ${options.map(o => `
-          <label class="ms-item" data-val="${o}">
-            <input type="checkbox" value="${o}" onchange="itemChangedMS('${id}')" /> ${o}
-          </label>`).join('')}
-      </div>
-      <div class="ms-footer">
-        <button class="ms-clear" onclick="clearMS('${id}')">Clear</button>
-        <button class="ms-apply" onclick="applyMS('${id}')">Apply</button>
-      </div>
-    </div>`;
-  return wrap;
-}
-
-function toggleMS(id) {
-  const wrap = document.getElementById('ms-' + id);
-  const isOpen = wrap.classList.contains('open');
-  // Close all others
-  document.querySelectorAll('.ms-wrap.open').forEach(w => w.classList.remove('open'));
-  if (!isOpen) {
-    wrap.classList.add('open');
-    wrap.querySelector('.ms-search')?.focus();
-  }
-}
-
-function searchMS(id, q) {
-  const list = document.getElementById('ms-list-' + id);
-  list.querySelectorAll('.ms-item:not(.all-item)').forEach(item => {
-    const val = item.getAttribute('data-val') || '';
-    item.style.display = val.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+function dedupeLatest(rows){
+  const MN={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+  const latest={};
+  rows.forEach(r=>{
+    const id=(r['Employee No']||'').trim();if(!id)return;
+    const {year,month}=parsePayrollMonth(r['Payroll Month']);if(!year||!month)return;
+    const k=`${year}-${MN[month]||'00'}`;
+    if(!latest[id]||k>latest[id].k)latest[id]={k,row:r};
   });
+  return Object.values(latest).map(x=>x.row);
 }
 
-function toggleAllMS(id, checked) {
-  const list = document.getElementById('ms-list-' + id);
-  list.querySelectorAll('input[type=checkbox]:not(#ms-all-' + id + ')').forEach(cb => {
-    if (!cb.closest('.ms-item').style.display || cb.closest('.ms-item').style.display !== 'none') {
-      cb.checked = checked;
-    }
-  });
-  FILTER_STATE[id] = checked ? [] : getCheckedVals(id);
-  updateMSCount(id);
+function detectCostCol(rows){
+  if(!rows.length)return 'Sum';
+  const cands=['Sum','sum','Total','Total Cost','Payroll Amount','Invoice Amount','Current Basic Salary','Amount'];
+  const hdrs=Object.keys(rows[0]);
+  for(const c of cands){if(hdrs.includes(c)&&rows.slice(0,10).some(r=>toNum(r[c])>0)){console.log('cost col:',c);return c;}}
+  for(const h of hdrs){if(rows.slice(0,20).filter(r=>toNum(r[h])>100).length>=5){console.log('cost col auto:',h);return h;}}
+  return 'Sum';
 }
 
-function itemChangedMS(id) {
-  const vals = getCheckedVals(id);
-  const total = document.getElementById('ms-list-' + id).querySelectorAll('input[type=checkbox]:not(#ms-all-' + id + ')').length;
-  document.getElementById('ms-all-' + id).checked = (vals.length === total);
-  FILTER_STATE[id] = vals.length === total ? [] : vals;
-  updateMSCount(id);
-}
-
-function getCheckedVals(id) {
-  const list = document.getElementById('ms-list-' + id);
-  return [...list.querySelectorAll('input[type=checkbox]:not(#ms-all-' + id + ')')].filter(cb => cb.checked).map(cb => cb.value);
-}
-
-function clearMS(id) {
-  const list = document.getElementById('ms-list-' + id);
-  list.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
-  document.getElementById('ms-all-' + id).checked = false;
-  FILTER_STATE[id] = [];
-  updateMSCount(id);
-}
-
-function applyMS(id) {
-  FILTER_STATE[id] = getCheckedVals(id);
-  const total = document.getElementById('ms-list-' + id).querySelectorAll('input[type=checkbox]:not(#ms-all-' + id + ')').length;
-  if (FILTER_STATE[id].length === total) FILTER_STATE[id] = [];
-  updateMSCount(id);
-  toggleMS(id); // close panel
-  applyFilters();
-}
-
-function updateMSCount(id) {
-  const ct = document.getElementById('ms-count-' + id);
-  const n  = FILTER_STATE[id].length;
-  ct.textContent = n;
-  ct.style.display = n > 0 ? '' : 'none';
-  // Highlight button border if active
-  const btn = document.querySelector('#ms-' + id + ' .ms-btn');
-  if (btn) btn.style.borderColor = n > 0 ? '#6366f1' : '';
-}
-
-// Close panels when clicking outside
-document.addEventListener('click', e => {
-  if (!e.target.closest('.ms-wrap')) {
-    document.querySelectorAll('.ms-wrap.open').forEach(w => w.classList.remove('open'));
+function matchRow(row,f){
+  if(f.year.length>0||f.month.length>0){
+    const {year,month}=parsePayrollMonth(row['Payroll Month']);
+    if(!inF(f.year,year)||!inF(f.month,month))return false;
   }
-});
-
-function uniqueVals(arr, col) {
-  return [...new Set(arr.map(r=>r[col]).filter(Boolean))].sort();
-}
-
-function populateFilters() {
-  // Dropdowns built from employee rows only (avoids blank entries from backcharge lines)
-  const hc = RAW.hc.filter(r => (r['Employee No'] || '').trim() !== '');
-
-  // Smart parse years AND months
-  const parsed = hc.map(r => parsePayrollMonth(r['Payroll Month']));
-  const years  = [...new Set(parsed.map(p=>p.year).filter(Boolean))].sort().reverse();
-  const MONTH_ORDER = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const monthsInData = [...new Set(parsed.map(p=>p.month).filter(Boolean))];
-  const months = MONTH_ORDER.filter(m => monthsInData.includes(m));
-
-  const optionMap = {
-    year:     years,
-    month:    months,
-    company:  uniqueVals(hc, 'Company Name'),
-    outlet:   uniqueVals(hc, 'Outlet'),
-    category: uniqueVals(hc, 'Category Name'),
-    grade:    uniqueVals(hc, 'Job Grades'),
-  };
-
-  const bar = document.getElementById('filter-bar');
-  bar.innerHTML = '';
-
-  FILTER_CFG.forEach(cfg => {
-    const opts = optionMap[cfg.id] || [];
-    const el = buildMultiSelect(cfg.id, cfg.label, opts);
-    bar.appendChild(el);
-    // Pre-check all (= no filter active)
-    const allCb = el.querySelector('#ms-all-' + cfg.id);
-    if (allCb) allCb.checked = true;
-    el.querySelectorAll(`#ms-list-${cfg.id} input[type=checkbox]:not(#ms-all-${cfg.id})`).forEach(cb => cb.checked = true);
-  });
-
-  // Reset filter state
-  Object.keys(FILTER_STATE).forEach(k => FILTER_STATE[k] = []);
-}
-
-
-// ══════════════════════════════════════════
-//  FILTER LOGIC (multi-select aware)
-// ══════════════════════════════════════════
-function getFilters() {
-  // Empty array = "all selected" (no filter applied)
-  return {
-    year:     FILTER_STATE.year,
-    month:    FILTER_STATE.month,
-    company:  FILTER_STATE.company,
-    outlet:   FILTER_STATE.outlet,
-    category: FILTER_STATE.category,
-    grade:    FILTER_STATE.grade,
-  };
-}
-
-function inFilter(arr, val) {
-  // arr empty = all selected; otherwise must be in list
-  return arr.length === 0 || arr.includes(val);
-}
-
-function matchRow(row, f) {
-  // Matches filters — does NOT exclude blank Employee No
-  // (blank rows are backcharge lines that still carry real cost)
-
-  if (f.year.length > 0 || f.month.length > 0) {
-    const { year, month } = parsePayrollMonth(row['Payroll Month']);
-    if (!inFilter(f.year,  year))  return false;
-    if (!inFilter(f.month, month)) return false;
-  }
-
-  if (!inFilter(f.company,  row['Company Name']))  return false;
-  if (!inFilter(f.outlet,   row['Outlet']))        return false;
-  if (!inFilter(f.category, row['Category Name'])) return false;
-  if (!inFilter(f.grade,    row['Job Grades']))    return false;
-
+  if(!inF(f.company,row['Company Name']))return false;
+  if(!inF(f.outlet,row['Outlet']))return false;
+  if(!inF(f.category,row['Category Name']))return false;
+  if(!inF(f.grade,row['Job Grades']))return false;
   return true;
 }
 
-function hasEmployeeId(row) {
-  return (row['Employee No'] || '').trim() !== '';
+// ── FILTER STATE ──
+const FS={year:[],month:[],company:[],outlet:[],category:[],grade:[]};
+const FCFG=[{id:'year',lbl:'Year'},{id:'month',lbl:'Month'},{id:'company',lbl:'Company'},{id:'outlet',lbl:'Outlet'},{id:'category',lbl:'Category'},{id:'grade',lbl:'Job Grade'}];
+
+function buildMS(id,lbl,opts){
+  const w=document.createElement('div');w.className='mw';w.id='mw-'+id;
+  w.innerHTML=`<div class="mb" onclick="tMS('${id}')"><span>${lbl}</span><span class="mc" id="mc-${id}" style="display:none">0</span><svg class="ma" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+  <div class="mp" id="mp-${id}">
+    <input class="ms-s" placeholder="Search…" oninput="sMS('${id}',this.value)"/>
+    <div class="ml" id="ml-${id}">
+      <label class="mi ai"><input type="checkbox" id="ma-${id}" checked onchange="taMS('${id}',this.checked)"/> All</label>
+      ${opts.map(o=>`<label class="mi" data-v="${o}"><input type="checkbox" value="${o}" onchange="icMS('${id}')"/> ${o}</label>`).join('')}
+    </div>
+    <div class="mf"><button class="mcl" onclick="clMS('${id}')">Clear</button><button class="map" onclick="apMS('${id}')">Apply</button></div>
+  </div>`;
+  return w;
+}
+function tMS(id){const w=document.getElementById('mw-'+id),o=w.classList.contains('op');document.querySelectorAll('.mw.op').forEach(x=>x.classList.remove('op'));if(!o){w.classList.add('op');w.querySelector('.ms-s')?.focus();}}
+function sMS(id,q){document.getElementById('ml-'+id).querySelectorAll('.mi:not(.ai)').forEach(i=>{i.style.display=(i.getAttribute('data-v')||'').toLowerCase().includes(q.toLowerCase())?'':'none';});}
+function taMS(id,chk){document.getElementById('ml-'+id).querySelectorAll(`input[type=checkbox]:not(#ma-${id})`).forEach(cb=>{if(cb.closest('.mi').style.display!=='none')cb.checked=chk;});FS[id]=chk?[]:gcMS(id);uMC(id);}
+function icMS(id){const v=gcMS(id),t=document.getElementById('ml-'+id).querySelectorAll(`input[type=checkbox]:not(#ma-${id})`).length;document.getElementById('ma-'+id).checked=(v.length===t);FS[id]=v.length===t?[]:v;uMC(id);}
+function gcMS(id){return[...document.getElementById('ml-'+id).querySelectorAll(`input[type=checkbox]:not(#ma-${id})`)].filter(c=>c.checked).map(c=>c.value);}
+function clMS(id){document.getElementById('ml-'+id).querySelectorAll('input[type=checkbox]').forEach(c=>c.checked=false);FS[id]=[];uMC(id);}
+function apMS(id){FS[id]=gcMS(id);const t=document.getElementById('ml-'+id).querySelectorAll(`input[type=checkbox]:not(#ma-${id})`).length;if(FS[id].length===t)FS[id]=[];uMC(id);tMS(id);applyFilters();}
+function uMC(id){const c=document.getElementById('mc-'+id),n=FS[id].length;c.textContent=n;c.style.display=n>0?'':'none';const b=document.querySelector('#mw-'+id+' .mb');if(b)b.style.borderColor=n>0?'var(--gold)':('')}
+document.addEventListener('click',e=>{if(!e.target.closest('.mw'))document.querySelectorAll('.mw.op').forEach(w=>w.classList.remove('op'));});
+
+function uniqueVals(arr,col){return[...new Set(arr.map(r=>r[col]).filter(Boolean))].sort();}
+
+function populateFilters(hcData){
+  const hc=hcData.filter(r=>(r['Employee No']||'').trim()!=='');
+  const parsed=hc.map(r=>parsePayrollMonth(r['Payroll Month']));
+  const years=[...new Set(parsed.map(p=>p.year).filter(Boolean))].sort().reverse();
+  const MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const mid=[...new Set(parsed.map(p=>p.month).filter(Boolean))];
+  const months=MO.filter(m=>mid.includes(m));
+  const opts={year:years,month:months,company:uniqueVals(hc,'Company Name'),outlet:uniqueVals(hc,'Outlet'),category:uniqueVals(hc,'Category Name'),grade:uniqueVals(hc,'Job Grades')};
+  const bar=document.getElementById('filterbar');bar.innerHTML='';
+  FCFG.forEach(cfg=>{
+    const el=buildMS(cfg.id,cfg.lbl,opts[cfg.id]||[]);bar.appendChild(el);
+    el.querySelector('#ma-'+cfg.id).checked=true;
+    el.querySelectorAll(`#ml-${cfg.id} input[type=checkbox]:not(#ma-${cfg.id})`).forEach(cb=>cb.checked=true);
+  });
+  Object.keys(FS).forEach(k=>FS[k]=[]);
 }
 
-function toNum(v) {
-  if (!v) return 0;
-  return parseFloat(String(v).replace(/[^0-9.\-]/g,'')) || 0;
+function getFilters(){return {year:FS.year,month:FS.month,company:FS.company,outlet:FS.outlet,category:FS.category,grade:FS.grade};}
+
+// ── CHART COLOURS ──
+const PBAR=['#C9A84C','#E8C96A','#9A7530','#D4B060','#B8943C','#F0D878','#8A6520','#EAC050'];
+const PCIT=['#C9A84C','#E8903A','#D4605A','#8A9A4C','#4A8A9A','#9A6AC9'];
+let CHARTS={};
+const CD={tick:'#6B6258',grid:'rgba(201,168,76,.06)',tt:{backgroundColor:'#18181C',borderColor:'rgba(201,168,76,.3)',borderWidth:1,titleColor:'#E8C96A',bodyColor:'#A89880'}};
+
+function linTrend(data){
+  const n=data.length;if(n<2)return data;
+  const xs=data.map((_,i)=>i),sx=xs.reduce((a,b)=>a+b,0),sy=data.reduce((a,b)=>a+b,0);
+  const sxy=xs.reduce((s,x,i)=>s+x*data[i],0),sx2=xs.reduce((s,x)=>s+x*x,0);
+  const m=(n*sxy-sx*sy)/(n*sx2-sx*sx),b=(sy-m*sx)/n;
+  return xs.map(x=>Math.round(m*x+b));
 }
 
-// ══════════════════════════════════════════
-//  MAIN APPLY FILTERS → COMPUTE → RENDER
-// ══════════════════════════════════════════
-function applyFilters() {
-  if (!RAW.hc.length) return;
-  const f = getFilters();
+function applyFilters(){
+  const f=getFilters();
+  const filtered=RAW.hc.filter(r=>matchRow(r,f));
+  const filtHC=filtered.filter(r=>hasEmpId(r));
+  const dedHC=dedupeLatest(filtHC);
 
-  // ALL matching rows — includes blank Employee No (backcharge lines carry real cost)
-  const filtered   = RAW.hc.filter(r => matchRow(r, f));
+  // Payroll KPIs
+  const totPay=filtered.reduce((s,r)=>s+toNum(r[COST_COL]),0);
+  const actCnt=dedHC.length;
+  const avgMP=actCnt?totPay/actCnt:0;
 
-  // Employee-only rows — for headcount KPI only (excludes blank Employee No duplicates)
-  const filteredHC = filtered.filter(r => hasEmployeeId(r));
+  // Category avg — use slice to avoid mutating array before reduce
+  const catG=groupBy(filtered,'Category Name');
+  const catA=Object.entries(catG).map(([k,rows])=>({name:k,avg:rows.reduce((s,r)=>s+toNum(r[COST_COL]),0)/rows.length}));
+  const topCat=[...catA].sort((a,b)=>b.avg-a.avg)[0];
+  const avgCat=catA.length?catA.reduce((s,c)=>s+c.avg,0)/catA.length:0;
 
-  // Deduplicated headcount — each unique employee counted once at their latest month
-  // within the current filtered dataset. This is the single source of truth for
-  // all headcount numbers — KPI, nationality, citizenship must all use this same set.
-  const dedupedHC  = dedupeByLatestMonth(filteredHC);
+  // Grade avg
+  const graG=groupBy(filtered,'Job Grades');
+  const graA=Object.entries(graG).map(([k,rows])=>({name:k,avg:rows.reduce((s,r)=>s+toNum(r[COST_COL]),0)/rows.length}));
+  const topGra=[...graA].sort((a,b)=>b.avg-a.avg)[0];
+  const avgGra=graA.length?graA.reduce((s,g)=>s+g.avg,0)/graA.length:0;
 
-  // ── KPIs ──
-  const totalPayroll = filtered.reduce((s,r) => s + toNum(r[COST_COL]), 0);   // all rows incl. backcharge
-  const activeCount  = dedupedHC.length;                                        // unique employees only
-  const avgManpower  = activeCount ? totalPayroll / activeCount : 0;
-
-  // Avg cost per category
-  const catGroups = groupBy(filtered, 'Category Name');
-  const catAvgs   = Object.entries(catGroups).map(([k,rows]) => ({
-    name: k,
-    avg: rows.reduce((s,r)=>s+toNum(r[COST_COL]),0) / rows.length
-  }));
-  const topCat   = catAvgs.sort((a,b)=>b.avg-a.avg)[0];
-  const avgCat   = catAvgs.length ? catAvgs.reduce((s,c)=>s+c.avg,0)/catAvgs.length : 0;
-
-  // Avg cost per grade
-  const gradeGroups = groupBy(filtered, 'Job Grades');
-  const gradeAvgs   = Object.entries(gradeGroups).map(([k,rows]) => ({
-    name: k,
-    avg: rows.reduce((s,r)=>s+toNum(r[COST_COL]),0) / rows.length
-  }));
-  const topGrade = gradeAvgs.sort((a,b)=>b.avg-a.avg)[0];
-  const avgGrade = gradeAvgs.length ? gradeAvgs.reduce((s,g)=>s+g.avg,0)/gradeAvgs.length : 0;
-
-  // ── New Hires & Exits — derived from HC Raw File 2 ──
-  // New Hire = unique employee whose Date Joined falls in the selected month/year
-  // Exit     = unique employee whose Date Resigned falls in the selected month/year
-  // Both use dedupedHC as the base so each employee is counted only once
-
-  function dateMatchesFilter(dateVal) {
-    if (!f.year.length && !f.month.length) return true; // no date filter active
-    const { year, month } = parsePayrollMonth(dateVal);
-    if (f.year.length  > 0 && !f.year.includes(year))   return false;
-    if (f.month.length > 0 && !f.month.includes(month)) return false;
+  // Hires & Exits — scan ALL HC rows by Date Joined / Date Resigned
+  function dateFits(dv){
+    if(!f.year.length&&!f.month.length)return true;
+    const {year,month}=parsePayrollMonth(dv);
+    if(f.year.length&&!f.year.includes(year))return false;
+    if(f.month.length&&!f.month.includes(month))return false;
     return true;
   }
-
-  const hiresFiltered = dedupedHC.filter(r => {
-    const joined = (r['Date Joined'] || '').trim();
-    return joined && dateMatchesFilter(joined);
+  const baseRows=RAW.hc.filter(r=>hasEmpId(r)&&inF(f.company,r['Company Name'])&&inF(f.outlet,r['Outlet'])&&inF(f.category,r['Category Name'])&&inF(f.grade,r['Job Grades']));
+  const hireSet=new Set(),exitSet=new Set();
+  baseRows.forEach(r=>{
+    const j=(r['Date Joined']||'').trim();if(j&&dateFits(j))hireSet.add(r['Employee No'].trim());
+    const x=(r['Date Resigned']||'').trim();if(x&&dateFits(x))exitSet.add(r['Employee No'].trim());
   });
 
-  const exitsFiltered = dedupedHC.filter(r => {
-    const resigned = (r['Date Resigned'] || '').trim();
-    return resigned && dateMatchesFilter(resigned);
-  });
+  // Update KPIs
+  setK('kpi-payroll','RM '+Math.round(totPay).toLocaleString('en-MY'));
+  setK('kpi-avg-mp','RM '+Math.round(avgMP).toLocaleString('en-MY'));
+  setK('kpi-avg-cat','RM '+Math.round(avgCat).toLocaleString('en-MY'));
+  setK('kpi-avg-grade','RM '+Math.round(avgGra).toLocaleString('en-MY'));
+  setK('kpi-active',actCnt.toLocaleString());
+  setK('kpi-hires',hireSet.size.toLocaleString());
+  setK('kpi-exited',exitSet.size.toLocaleString());
+  const cl=document.getElementById('kpi-avg-cat-lbl'),gl=document.getElementById('kpi-avg-grade-lbl');
+  if(cl)cl.textContent=topCat?topCat.name+' highest':'By category';
+  if(gl)gl.textContent=topGra?topGra.name+' highest':'By grade';
 
-  // ── Update KPI DOM ──
-  setKPI('kpi-payroll',    'RM ' + Math.round(totalPayroll).toLocaleString('en-MY'));
-  setKPI('kpi-avg-mp',     'RM ' + Math.round(avgManpower).toLocaleString('en-MY'));
-  setKPI('kpi-avg-cat',    'RM ' + Math.round(avgCat).toLocaleString('en-MY'));
-  setKPI('kpi-avg-grade',  'RM ' + Math.round(avgGrade).toLocaleString('en-MY'));
-  setKPI('kpi-active',     activeCount.toLocaleString());
-  setKPI('kpi-hires',      hiresFiltered.length.toLocaleString());
-  setKPI('kpi-exited',     exitsFiltered.length.toLocaleString());
-  document.getElementById('kpi-avg-cat-label').textContent   = topCat   ? topCat.name   + ' highest' : 'By category';
-  document.getElementById('kpi-avg-grade-label').textContent = topGrade ? topGrade.name + ' highest' : 'By grade';
-
-  // ── Charts ──
-  buildTrendChart(filtered, f);
-  buildOutletChart(filtered);
-  buildDonut('chart-cit', 'legend-cit', dedupedHC, 'Citizenship Description', CIT_PALETTE);
-  buildNatFlags(dedupedHC);
+  buildTrend(filtered,f);
+  buildOutlet(filtered);
+  buildDonut('chart-cit','legend-cit',dedHC,'Citizenship Description',PCIT);
+  buildNatFlags(dedHC);
 }
 
-function setKPI(id, val) {
-  const el = document.getElementById(id);
-  if (el) { el.textContent = val; el.classList.add('data-flash'); setTimeout(()=>el.classList.remove('data-flash'),400); }
-}
+function setK(id,v){const e=document.getElementById(id);if(e){e.textContent=v;e.classList.add('df');setTimeout(()=>e.classList.remove('df'),400);}}
 
-function groupBy(arr, key) {
-  return arr.reduce((acc, r) => {
-    const k = r[key] || 'Unknown';
-    if (!acc[k]) acc[k] = [];
-    acc[k].push(r);
-    return acc;
-  }, {});
-}
+function buildTrend(filtered,f){
+  const MN2={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+  const MNR={'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
+  const ctx=document.getElementById('chart-trend').getContext('2d');
+  if(CHARTS.trend)CHARTS.trend.destroy();
+  const ms=f.month&&f.month.length>0;
 
-// ══════════════════════════════════════════
-//  CHART BUILDERS
-// ══════════════════════════════════════════
-const MONTHS_ORDER = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const PALETTE_BAR  = ['#C9A84C','#E8C96A','#9A7530','#D4B060','#B8943C','#F0D878','#8A6520','#EAC050'];
-const CIT_PALETTE  = ['#C9A84C','#E8903A','#D4605A','#8A9A4C','#4A8A9A','#9A6AC9'];
-
-function cdOpts() {
-  return {
-    tick: '#6B6258',
-    grid: 'rgba(201,168,76,0.06)',
-    tooltip: {
-      backgroundColor: '#18181C',
-      borderColor: 'rgba(201,168,76,0.3)',
-      borderWidth: 1,
-      titleColor: '#E8C96A',
-      bodyColor: '#A89880'
-    }
-  };
-}
-
-function setSyncStatus(state) {
-  const dot   = document.getElementById('sync-dot');
-  const label = document.getElementById('sync-label');
-  if (state === 'live')    { dot.style.background='#C9A84C'; label.textContent='Live'; }
-  if (state === 'syncing') { dot.style.background='#E8903A'; label.textContent='Syncing…'; }
-  if (state === 'error')   { dot.style.background='#ef4444'; label.textContent='Error'; }
-}
-
-// ── Simple linear regression for trend line ──
-function linearTrend(data) {
-  const n = data.length;
-  if (n < 2) return data;
-  const xs = data.map((_,i) => i);
-  const sumX  = xs.reduce((a,b)=>a+b,0);
-  const sumY  = data.reduce((a,b)=>a+b,0);
-  const sumXY = xs.reduce((s,x,i)=>s+x*data[i],0);
-  const sumX2 = xs.reduce((s,x)=>s+x*x,0);
-  const m = (n*sumXY - sumX*sumY) / (n*sumX2 - sumX*sumX);
-  const b = (sumY - m*sumX) / n;
-  return xs.map(x => Math.round(m*x + b));
-}
-
-function buildTrendChart(filtered, f) {
-  const MONTH_NUM = { Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',
-                      Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12' };
-  const MONTH_NAME = { '01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun',
-                       '07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec' };
-
-  const ctx = document.getElementById('chart-trend').getContext('2d');
-  if (CHARTS.trend) CHARTS.trend.destroy();
-  const cd = cdOpts();
-
-  const monthsSelected = f.month && f.month.length > 0;
-
-  // ── MODE A: Month(s) selected → outlets on X-axis, one bar series per month ──
-  if (monthsSelected) {
-    // Collect all outlets with data
-    const outletSet = [...new Set(filtered.map(r => r['Outlet']).filter(Boolean))].sort();
-
-    // For each selected month, compute per-outlet costs
-    // Re-filter from ALL hc data per month to get proper month slices
-    const selectedMonths = f.month; // array of month names e.g. ['Jan','Feb']
-
-    // Build datasets — one per selected month, bars side by side per outlet
-    const monthColors = [
-      'rgba(201,168,76,0.8)','rgba(232,201,106,0.8)','rgba(232,144,58,0.8)',
-      'rgba(125,211,200,0.8)','rgba(154,117,48,0.8)','rgba(212,176,96,0.8)'
-    ];
-    const monthBorders = ['#C9A84C','#E8C96A','#E8903A','#7DD3C8','#9A7530','#D4B060'];
-
-    const datasets = selectedMonths.map((mon, idx) => {
-      const monRows = filtered.filter(r => {
-        const { month } = parsePayrollMonth(r['Payroll Month']);
-        return month === mon;
-      });
-      const outletCosts = outletSet.map(outlet =>
-        monRows.filter(r => r['Outlet'] === outlet)
-               .reduce((s, r) => s + toNum(r[COST_COL]), 0)
-      );
-      return {
-        type: 'bar',
-        label: mon,
-        data: outletCosts,
-        backgroundColor: monthColors[idx % monthColors.length],
-        borderColor: monthBorders[idx % monthBorders.length],
-        borderWidth: 1,
-        borderRadius: 4,
-        borderSkipped: false,
-        datalabels: {
-          display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-          anchor: 'end',
-          align: 'end',
-          offset: 2,
-          color: '#A89880',
-          font: { size: 8, family: 'DM Mono', weight: '500' },
-          formatter: v => v > 0 ? 'RM '+(v/1000).toFixed(0)+'K' : ''
-        }
-      };
+  if(ms){
+    const outlets=[...new Set(filtered.map(r=>r['Outlet']).filter(Boolean))].sort();
+    const MC=['rgba(201,168,76,.8)','rgba(232,201,106,.8)','rgba(232,144,58,.8)','rgba(125,211,200,.8)','rgba(154,117,48,.8)','rgba(212,176,96,.8)'];
+    const MB=['#C9A84C','#E8C96A','#E8903A','#7DD3C8','#9A7530','#D4B060'];
+    const ds=f.month.map((mon,i)=>{
+      const mr=filtered.filter(r=>{const {month}=parsePayrollMonth(r['Payroll Month']);return month===mon;});
+      return {type:'bar',label:mon,data:outlets.map(o=>mr.filter(r=>r['Outlet']===o).reduce((s,r)=>s+toNum(r[COST_COL]),0)),
+        backgroundColor:MC[i%MC.length],borderColor:MB[i%MB.length],borderWidth:1,borderRadius:4,borderSkipped:false,
+        datalabels:{display:c=>c.dataset.data[c.dataIndex]>0,anchor:'end',align:'end',offset:2,color:'#A89880',font:{size:8,family:'DM Mono',weight:'500'},formatter:v=>v>0?'RM '+(v/1000).toFixed(0)+'K':''}};
     });
-
-    CHARTS.trend = new Chart(ctx, {
-      data: { labels: outletSet, datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: {
-            display: true,
-            position: 'top',
-            align: 'end',
-            labels: { color: '#A89880', font: { size: 10 }, boxWidth: 12, boxHeight: 12, padding: 12 }
-          },
-          tooltip: {
-            ...cd.tooltip,
-            callbacks: {
-              label: c => ` ${c.dataset.label}: RM ${Math.round(c.raw).toLocaleString('en-MY')}`
-            }
-          },
-          datalabels: {}
-        },
-        scales: {
-          x: {
-            ticks: { color: cd.tick, font:{size:9}, maxRotation: 40 },
-            grid: { color: cd.grid },
-            title: {
-              display: true,
-              text: 'Outlet — ' + selectedMonths.join(' vs '),
-              color: '#A89880',
-              font: { size: 9, family: 'DM Mono' }
-            }
-          },
-          y: {
-            ticks: { color: cd.tick, font:{size:9}, callback: v => 'RM '+(v/1000).toFixed(0)+'K' },
-            grid: { color: cd.grid }
-          }
-        }
-      },
-      plugins: [ChartDataLabels]
-    });
+    CHARTS.trend=new Chart(ctx,{data:{labels:outlets,datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:true,position:'top',align:'end',labels:{color:'#A89880',font:{size:10},boxWidth:12,boxHeight:12,padding:12}},
+        tooltip:{...CD.tt,callbacks:{label:c=>` ${c.dataset.label}: RM ${Math.round(c.raw).toLocaleString('en-MY')}`}},datalabels:{}},
+      scales:{x:{ticks:{color:CD.tick,font:{size:9},maxRotation:40},grid:{color:CD.grid},title:{display:true,text:'Outlet — '+f.month.join(' vs '),color:'#A89880',font:{size:9,family:'DM Mono'}}},
+        y:{ticks:{color:CD.tick,font:{size:9},callback:v=>'RM '+(v/1000).toFixed(0)+'K'},grid:{color:CD.grid}}}},plugins:[ChartDataLabels]});
     return;
   }
 
-  // ── MODE B: No month filter → full timeline, bars + trend + MoM ──
-  const byYearMonth = {};
-  filtered.forEach(r => {
-    const { year, month } = parsePayrollMonth(r['Payroll Month']);
-    if (!year || !month) return;
-    const key = `${year}-${MONTH_NUM[month]}`;
-    byYearMonth[key] = (byYearMonth[key] || 0) + toNum(r[COST_COL]);
-  });
-
-  const sortedKeys = Object.keys(byYearMonth).sort();
-  const labels = sortedKeys.map(k => {
-    const [yr, mn] = k.split('-');
-    return `${MONTH_NAME[mn]} ${yr}`;
-  });
-  const data = sortedKeys.map(k => byYearMonth[k]);
-
-  // Auto-size: wider when many months (min 300px, grows with data points)
-  const trendHeight = Math.max(300, Math.min(420, sortedKeys.length * 22));
-  const trendContainer = document.getElementById('chart-trend').parentElement;
-  if (trendContainer) trendContainer.style.height = trendHeight + 'px';
-
-  const trendData = linearTrend(data);
-  const momData = data.map((v, i) => {
-    if (i === 0 || data[i-1] === 0) return null;
-    return Math.round(v - data[i-1]);
-  });
-
-  const maxVal = Math.max(...data, 1);
-  const labelCol = '#A89880';
-
-  CHARTS.trend = new Chart(ctx, {
-    data: {
-      labels,
-      datasets: [
-        {
-          type: 'bar',
-          label: 'Payroll Cost',
-          data,
-          backgroundColor: data.map(v => `rgba(201,168,76,${0.3 + (v/maxVal)*0.65})`),
-          borderColor:      data.map(v => `rgba(201,168,76,${0.5 + (v/maxVal)*0.5})`),
-          borderWidth: 1,
-          borderRadius: 5,
-          borderSkipped: false,
-          yAxisID: 'y',
-          order: 3,
-          datalabels: {
-            display: true,
-            anchor: 'end', align: 'end', offset: 2,
-            color: labelCol,
-            font: { size: 9, family: 'DM Mono', weight: '500' },
-            formatter: v => v > 0 ? 'RM '+(v/1000).toFixed(0)+'K' : ''
-          }
-        },
-        {
-          type: 'line',
-          label: 'Trend',
-          data: trendData,
-          borderColor: '#E8903A',
-          backgroundColor: 'transparent',
-          borderWidth: 2,
-          borderDash: [5, 4],
-          pointRadius: 0,
-          pointHoverRadius: 4,
-          tension: 0.4,
-          yAxisID: 'y',
-          order: 2,
-          datalabels: { display: false }
-        },
-        {
-          type: 'line',
-          label: 'MoM Change',
-          data: momData,
-          borderColor: '#7DD3C8',
-          backgroundColor: 'rgba(125,211,200,0.08)',
-          borderWidth: 1.5,
-          pointBackgroundColor: momData.map(v => v === null ? 'transparent' : v >= 0 ? '#6ee7b7' : '#f87171'),
-          pointBorderColor: 'transparent',
-          pointRadius: momData.map(v => v === null ? 0 : 4),
-          pointHoverRadius: 6,
-          tension: 0.4,
-          fill: false,
-          yAxisID: 'y2',
-          order: 1,
-          datalabels: {
-            display: ctx => { const v = ctx.dataset.data[ctx.dataIndex]; return v !== null && v !== 0; },
-            anchor: 'top', align: 'top', offset: 2,
-            color: ctx => ctx.dataset.data[ctx.dataIndex] >= 0 ? '#6ee7b7' : '#f87171',
-            font: { size: 8, family: 'DM Mono', weight: '600' },
-            formatter: v => v === null ? '' : (v >= 0 ? '+' : '') + (v/1000).toFixed(1) + 'K'
-          }
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          align: 'end',
-          labels: { color: '#A89880', font: { size: 10 }, boxWidth: 20, boxHeight: 2,
-                    usePointStyle: true, pointStyle: 'line', padding: 14 }
-        },
-        tooltip: {
-          ...cd.tooltip,
-          callbacks: {
-            label: c => {
-              if (c.dataset.label === 'Trend') return ' Trend: RM ' + Math.round(c.raw).toLocaleString('en-MY');
-              if (c.dataset.label === 'MoM Change') {
-                if (c.raw === null) return null;
-                return ` MoM: ${c.raw >= 0 ? '+' : ''}RM ${Math.abs(Math.round(c.raw)).toLocaleString('en-MY')}`;
-              }
-              return ' Total: RM ' + Math.round(c.raw).toLocaleString('en-MY');
-            },
-            filter: item => item.raw !== null
-          }
-        },
-        datalabels: {}
-      },
-      scales: {
-        x: {
-          ticks: { color: cd.tick, font:{size:9}, autoSkip: true, maxTicksLimit: 18, maxRotation: 45, minRotation: 30 },
-          grid: { color: cd.grid }
-        },
-        y: {
-          position: 'left',
-          ticks: { color: cd.tick, font:{size:10}, callback: v => 'RM '+(v/1000).toFixed(0)+'K' },
-          grid: { color: cd.grid }
-        },
-        y2: {
-          position: 'right',
-          ticks: { color: '#7DD3C8', font: { size: 9, family: 'DM Mono' },
-                   callback: v => (v >= 0 ? '+' : '') + (v/1000).toFixed(0) + 'K' },
-          grid: { drawOnChartArea: false },
-          title: { display: true, text: 'MoM Δ', color: '#7DD3C8', font: { size: 9, family: 'DM Mono' } }
-        }
-      }
-    },
-    plugins: [ChartDataLabels]
-  });
+  const bym={};
+  filtered.forEach(r=>{const {year,month}=parsePayrollMonth(r['Payroll Month']);if(!year||!month)return;const k=`${year}-${MN2[month]}`;bym[k]=(bym[k]||0)+toNum(r[COST_COL]);});
+  const sk=Object.keys(bym).sort();
+  const labels=sk.map(k=>{const[y,m]=k.split('-');return `${MNR[m]} ${y}`;});
+  const data=sk.map(k=>bym[k]);
+  const tw=document.getElementById('trend-wrap');if(tw)tw.style.height=Math.max(300,Math.min(420,sk.length*22))+'px';
+  const td=linTrend(data),mom=data.map((v,i)=>i===0||data[i-1]===0?null:Math.round(v-data[i-1]));
+  const mx=Math.max(...data,1),lc='#A89880';
+  CHARTS.trend=new Chart(ctx,{data:{labels,datasets:[
+    {type:'bar',label:'Payroll Cost',data,backgroundColor:data.map(v=>`rgba(201,168,76,${.3+(v/mx)*.65})`),borderColor:data.map(v=>`rgba(201,168,76,${.5+(v/mx)*.5})`),borderWidth:1,borderRadius:5,borderSkipped:false,yAxisID:'y',order:3,datalabels:{display:true,anchor:'end',align:'end',offset:2,color:lc,font:{size:9,family:'DM Mono',weight:'500'},formatter:v=>v>0?'RM '+(v/1000).toFixed(0)+'K':''}},
+    {type:'line',label:'Trend',data:td,borderColor:'#E8903A',backgroundColor:'transparent',borderWidth:2,borderDash:[5,4],pointRadius:0,pointHoverRadius:4,tension:.4,yAxisID:'y',order:2,datalabels:{display:false}},
+    {type:'line',label:'MoM Change',data:mom,borderColor:'#7DD3C8',backgroundColor:'rgba(125,211,200,.08)',borderWidth:1.5,pointBackgroundColor:mom.map(v=>v===null?'transparent':v>=0?'#6ee7b7':'#f87171'),pointBorderColor:'transparent',pointRadius:mom.map(v=>v===null?0:4),pointHoverRadius:6,tension:.4,fill:false,yAxisID:'y2',order:1,
+      datalabels:{display:c=>{const v=c.dataset.data[c.dataIndex];return v!==null&&v!==0;},anchor:'top',align:'top',offset:2,color:c=>c.dataset.data[c.dataIndex]>=0?'#6ee7b7':'#f87171',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v===null?'':(v>=0?'+':'')+(v/1000).toFixed(1)+'K'}}
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'end',labels:{color:'#A89880',font:{size:10},boxWidth:20,boxHeight:2,usePointStyle:true,pointStyle:'line',padding:14}},
+      tooltip:{...CD.tt,callbacks:{label:c=>{if(c.dataset.label==='Trend')return ' Trend: RM '+Math.round(c.raw).toLocaleString('en-MY');if(c.dataset.label==='MoM Change'){if(c.raw===null)return null;return` MoM: ${c.raw>=0?'+':''}RM ${Math.abs(Math.round(c.raw)).toLocaleString('en-MY')}`;}return ' Total: RM '+Math.round(c.raw).toLocaleString('en-MY');},filter:i=>i.raw!==null}},datalabels:{}},
+    scales:{x:{ticks:{color:CD.tick,font:{size:9},autoSkip:true,maxTicksLimit:18,maxRotation:45,minRotation:30},grid:{color:CD.grid}},
+      y:{position:'left',ticks:{color:CD.tick,font:{size:10},callback:v=>'RM '+(v/1000).toFixed(0)+'K'},grid:{color:CD.grid}},
+      y2:{position:'right',ticks:{color:'#7DD3C8',font:{size:9,family:'DM Mono'},callback:v=>(v>=0?'+':'')+(v/1000).toFixed(0)+'K'},grid:{drawOnChartArea:false},title:{display:true,text:'MoM Δ',color:'#7DD3C8',font:{size:9,family:'DM Mono'}}}}},plugins:[ChartDataLabels]});
 }
 
-function buildOutletChart(filtered) {
-  const outletGroup = groupBy(filtered, 'Outlet');
-  const sorted = Object.entries(outletGroup)
-    .map(([k,v]) => ({
-      o: k,
-      avg: Math.round(v.reduce((s,r)=>s+toNum(r[COST_COL]),0) / v.length),
-      count: v.filter(r=>hasEmployeeId(r)).length
-    }))
-    .sort((a,b) => b.avg - a.avg)
-    .slice(0, 20); // allow up to 20 outlets now it's full width
-
-  // Dynamically size the chart container — 46px per outlet, min 280px
-  const dynamicHeight = Math.max(280, sorted.length * 46);
-  const container = document.getElementById('chart-outlet').parentElement;
-  if (container) container.style.height = dynamicHeight + 'px';
-
-  const labels = sorted.map(x => x.o);
-  const data   = sorted.map(x => x.avg);
-  const counts = sorted.map(x => x.count);
-  const ctx = document.getElementById('chart-outlet').getContext('2d');
-  if (CHARTS.outlet) CHARTS.outlet.destroy();
-  const cd = cdOpts();
-  const labelColor = isDark ? '#e2e8f0' : '#374151';
-
-  CHARTS.outlet = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Avg Cost / HC (RM)',
-        data,
-        backgroundColor: labels.map((_,i) => PALETTE_BAR[i % PALETTE_BAR.length]),
-        borderRadius: 4,
-        borderSkipped: false,
-        datalabels: {
-          display: true,
-          anchor: 'end',
-          align: 'end',
-          offset: 4,
-          color: labelColor,
-          font: { size: 9, family: 'DM Mono', weight: '500' },
-          formatter: (v, c) => {
-            const hc = counts[c.dataIndex];
-            return 'RM '+(v/1000).toFixed(1)+'K' + (hc ? '  ·  '+hc+' pax' : '');
-          }
-        }
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      indexAxis: 'y',                          // Outlet always on Y-axis
-      layout: { padding: { right: 100 } },     // room for data labels on the right
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          ...cd.tooltip,
-          callbacks: {
-            label: (c) => [
-              ' Avg Cost: RM ' + c.raw.toLocaleString('en-MY'),
-              ' Headcount: ' + counts[c.dataIndex] + ' pax'
-            ]
-          }
-        },
-        datalabels: {}
-      },
-      scales: {
-        x: {
-          ticks: { color: cd.tick, font:{size:10}, callback: v => 'RM '+(v/1000).toFixed(0)+'K' },
-          grid: { color: cd.grid }
-        },
-        y: {
-          ticks: { color: cd.tick, font:{size:10} },
-          grid: { display: false }
-        }
-      }
-    },
-    plugins: [ChartDataLabels]
-  });
+function buildOutlet(filtered){
+  const og=groupBy(filtered,'Outlet');
+  const sorted=Object.entries(og).map(([k,v])=>({o:k,avg:Math.round(v.reduce((s,r)=>s+toNum(r[COST_COL]),0)/v.length),cnt:v.filter(r=>hasEmpId(r)).length})).sort((a,b)=>b.avg-a.avg).slice(0,20);
+  const ow=document.getElementById('outlet-wrap');if(ow)ow.style.height=Math.max(280,sorted.length*46)+'px';
+  const labels=sorted.map(x=>x.o),data=sorted.map(x=>x.avg),cnts=sorted.map(x=>x.cnt);
+  const ctx=document.getElementById('chart-outlet').getContext('2d');
+  if(CHARTS.outlet)CHARTS.outlet.destroy();
+  CHARTS.outlet=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Avg Cost/HC',data,backgroundColor:labels.map((_,i)=>PBAR[i%PBAR.length]),borderRadius:4,borderSkipped:false,
+    datalabels:{display:true,anchor:'end',align:'end',offset:4,color:'#e2e8f0',font:{size:9,family:'DM Mono',weight:'500'},formatter:(v,c)=>'RM '+(v/1000).toFixed(1)+'K'+(cnts[c.dataIndex]?'  ·  '+cnts[c.dataIndex]+' pax':'')}}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',layout:{padding:{right:100}},
+      plugins:{legend:{display:false},tooltip:{...CD.tt,callbacks:{label:c=>[' Avg: RM '+c.raw.toLocaleString('en-MY'),' HC: '+cnts[c.dataIndex]+' pax']}},datalabels:{}},
+      scales:{x:{ticks:{color:CD.tick,font:{size:10},callback:v=>'RM '+(v/1000).toFixed(0)+'K'},grid:{color:CD.grid}},y:{ticks:{color:CD.tick,font:{size:10}},grid:{display:false}}}},plugins:[ChartDataLabels]});
 }
 
-// ══════════════════════════════════════════
-//  NATIONALITY FLAG INDICATORS
-// ══════════════════════════════════════════
-const NAT_FLAG_MAP = {
-  // key: lowercase nationality name → { code: ISO 3166-1 alpha-2, color, bg }
-  'malaysian':    { code: 'my', color: '#cc0001', bg: '#fff0f0' },
-  'malaysia':     { code: 'my', color: '#cc0001', bg: '#fff0f0' },
-  'bangladeshi':  { code: 'bd', color: '#006a4e', bg: '#f0fff6' },
-  'bangladesh':   { code: 'bd', color: '#006a4e', bg: '#f0fff6' },
-  'nepalese':     { code: 'np', color: '#003893', bg: '#f0f4ff' },
-  'nepali':       { code: 'np', color: '#003893', bg: '#f0f4ff' },
-  'nepal':        { code: 'np', color: '#003893', bg: '#f0f4ff' },
-  'myanmar':      { code: 'mm', color: '#34a853', bg: '#f0fff4' },
-  'burmese':      { code: 'mm', color: '#34a853', bg: '#f0fff4' },
-  'indonesian':   { code: 'id', color: '#ce1126', bg: '#fff0f0' },
-  'indonesia':    { code: 'id', color: '#ce1126', bg: '#fff0f0' },
-  'filipino':     { code: 'ph', color: '#0038a8', bg: '#f0f4ff' },
-  'philippines':  { code: 'ph', color: '#0038a8', bg: '#f0f4ff' },
-  'indian':       { code: 'in', color: '#ff9933', bg: '#fff8f0' },
-  'india':        { code: 'in', color: '#ff9933', bg: '#fff8f0' },
-  'pakistani':    { code: 'pk', color: '#01411c', bg: '#f0fff4' },
-  'pakistan':     { code: 'pk', color: '#01411c', bg: '#f0fff4' },
-  'thai':         { code: 'th', color: '#a51931', bg: '#fff0f0' },
-  'thailand':     { code: 'th', color: '#a51931', bg: '#fff0f0' },
-  'vietnamese':   { code: 'vn', color: '#da251d', bg: '#fff0f0' },
-  'vietnam':      { code: 'vn', color: '#da251d', bg: '#fff0f0' },
-  'cambodian':    { code: 'kh', color: '#032ea1', bg: '#f0f4ff' },
-  'cambodia':     { code: 'kh', color: '#032ea1', bg: '#f0f4ff' },
-  'chinese':      { code: 'cn', color: '#de2910', bg: '#fff0f0' },
-  'china':        { code: 'cn', color: '#de2910', bg: '#fff0f0' },
-  'sri lankan':   { code: 'lk', color: '#8d153a', bg: '#fff0f4' },
-  'sri lanka':    { code: 'lk', color: '#8d153a', bg: '#fff0f4' },
-  'singaporean':  { code: 'sg', color: '#ef3340', bg: '#fff0f0' },
-  'singapore':    { code: 'sg', color: '#ef3340', bg: '#fff0f0' },
-  'british':      { code: 'gb', color: '#012169', bg: '#f0f2ff' },
-  'japanese':     { code: 'jp', color: '#bc002d', bg: '#fff0f2' },
-  'korean':       { code: 'kr', color: '#003478', bg: '#f0f2ff' },
-  'south korean': { code: 'kr', color: '#003478', bg: '#f0f2ff' },
-  'australian':   { code: 'au', color: '#00008b', bg: '#f0f2ff' },
-  'american':     { code: 'us', color: '#b22234', bg: '#fff0f0' },
-};
-
-function getNatMeta(name) {
-  const key = (name || '').toLowerCase().trim();
-  if (NAT_FLAG_MAP[key]) return NAT_FLAG_MAP[key];
-  for (const [k, v] of Object.entries(NAT_FLAG_MAP)) {
-    if (key.includes(k) || k.includes(key)) return v;
-  }
-  return { code: null, color: '#6366f1', bg: '#f0f0ff' };
+// ── NAT FLAGS ──
+const NFM={'malaysian':{code:'my',color:'#cc0001'},'malaysia':{code:'my',color:'#cc0001'},'bangladeshi':{code:'bd',color:'#006a4e'},'bangladesh':{code:'bd',color:'#006a4e'},'nepalese':{code:'np',color:'#003893'},'nepali':{code:'np',color:'#003893'},'nepal':{code:'np',color:'#003893'},'myanmar':{code:'mm',color:'#34a853'},'burmese':{code:'mm',color:'#34a853'},'indonesian':{code:'id',color:'#ce1126'},'indonesia':{code:'id',color:'#ce1126'},'filipino':{code:'ph',color:'#0038a8'},'philippines':{code:'ph',color:'#0038a8'},'indian':{code:'in',color:'#ff9933'},'india':{code:'in',color:'#ff9933'},'pakistani':{code:'pk',color:'#01411c'},'pakistan':{code:'pk',color:'#01411c'},'thai':{code:'th',color:'#a51931'},'thailand':{code:'th',color:'#a51931'},'vietnamese':{code:'vn',color:'#da251d'},'vietnam':{code:'vn',color:'#da251d'},'cambodian':{code:'kh',color:'#032ea1'},'cambodia':{code:'kh',color:'#032ea1'},'chinese':{code:'cn',color:'#de2910'},'china':{code:'cn',color:'#de2910'},'sri lankan':{code:'lk',color:'#8d153a'},'sri lanka':{code:'lk',color:'#8d153a'},'singaporean':{code:'sg',color:'#ef3340'},'singapore':{code:'sg',color:'#ef3340'},'british':{code:'gb',color:'#012169'},'japanese':{code:'jp',color:'#bc002d'},'korean':{code:'kr',color:'#003478'},'south korean':{code:'kr',color:'#003478'},'australian':{code:'au',color:'#00008b'},'american':{code:'us',color:'#b22234'}};
+function getNM(name){const k=(name||'').toLowerCase().trim();if(NFM[k])return NFM[k];for(const[n,v]of Object.entries(NFM))if(k.includes(n)||n.includes(k))return v;return{code:null,color:'#6366f1'};}
+function flagI(code,name){if(!code)return`<svg width="28" height="20" viewBox="0 0 28 20" style="flex-shrink:0;border-radius:2px;border:1px solid rgba(255,255,255,.1)" fill="none"><rect width="28" height="20" fill="#333"/><circle cx="14" cy="10" r="6" stroke="#666" stroke-width="1.2"/></svg>`;return`<img src="https://flagcdn.com/w40/${code}.png" width="28" height="20" alt="${name}" style="flex-shrink:0;border-radius:2px;border:1px solid rgba(255,255,255,.1);object-fit:cover" onerror="this.style.display='none'"/>`;}
+function buildNatFlags(rows){
+  const g=groupBy(rows,'Nationality Description'),s=Object.entries(g).sort((a,b)=>b[1].length-a[1].length),tot=rows.length;
+  const grid=document.getElementById('natgrid');if(!grid)return;
+  if(!s.length){grid.innerHTML='<p style="color:var(--tm);font-size:12px">No nationality data.</p>';return;}
+  const cols=s.length<=2?1:s.length<=4?2:s.length<=6?3:4;
+  grid.style.gridTemplateColumns=`repeat(${cols},minmax(0,1fr))`;
+  grid.innerHTML=s.map(([name,rows2])=>{const cnt=rows2.length,pct=tot?Math.round(cnt/tot*100):0,m=getNM(name);
+    return`<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:7px">
+      <div style="display:flex;align-items:center;gap:9px">${flagI(m.code,name)}<span style="font-size:11px;font-weight:500;color:#e2e8f0;line-height:1.3;word-break:break-word">${name}</span></div>
+      <div style="display:flex;align-items:baseline;gap:5px"><span style="font-size:20px;font-weight:600;font-family:'DM Mono',monospace;color:#f1f5f9">${cnt}</span><span style="font-size:10px;color:#94a3b8;font-family:'DM Mono',monospace">(${pct}%)</span></div>
+      <div style="height:3px;border-radius:99px;background:rgba(255,255,255,.08)"><div style="height:100%;width:${pct}%;border-radius:99px;background:${m.color};transition:width .4s ease"></div></div>
+    </div>`;}).join('');
 }
 
-function flagImg(code, name) {
-  if (!code) {
-    // Fallback: a neutral globe SVG icon
-    return `<svg width="28" height="20" viewBox="0 0 28 20" style="flex-shrink:0;border-radius:2px;border:1px solid rgba(0,0,0,0.08)" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="20" fill="#e5e7eb"/><circle cx="14" cy="10" r="6" stroke="#9ca3af" stroke-width="1.2"/><line x1="14" y1="4" x2="14" y2="16" stroke="#9ca3af" stroke-width="1.2"/><ellipse cx="14" cy="10" rx="3" ry="6" stroke="#9ca3af" stroke-width="1.2"/><line x1="8" y1="10" x2="20" y2="10" stroke="#9ca3af" stroke-width="1.2"/></svg>`;
-  }
-  return `<img
-    src="https://flagcdn.com/w40/${code}.png"
-    srcset="https://flagcdn.com/w80/${code}.png 2x"
-    width="28" height="20"
-    alt="${name} flag"
-    style="flex-shrink:0;border-radius:2px;border:1px solid rgba(0,0,0,0.08);object-fit:cover;display:block"
-    onerror="this.style.display='none'"
-  />`;
+function buildDonut(cid,lid,rows,col,pal){
+  const g=groupBy(rows,col),s=Object.entries(g).sort((a,b)=>b[1].length-a[1].length);
+  const labels=s.map(([k])=>k),data=s.map(([,v])=>v.length),colors=labels.map((_,i)=>pal[i%pal.length]),tot=data.reduce((a,b)=>a+b,0);
+  const ctx=document.getElementById(cid).getContext('2d');if(CHARTS[cid])CHARTS[cid].destroy();
+  CHARTS[cid]=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#18181C',hoverOffset:6,
+    datalabels:{display:c=>{const p=tot?c.dataset.data[c.dataIndex]/tot*100:0;return p>=5;},color:'#fff',font:{size:9,weight:'600',family:'DM Mono'},formatter:v=>(tot?Math.round(v/tot*100):0)+'%',textAlign:'center'}}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e293b',borderColor:'#334155',borderWidth:1,titleColor:'#e2e8f0',bodyColor:'#94a3b8',callbacks:{label:c=>` ${c.label}: ${c.raw} (${tot?Math.round(c.raw/tot*100):0}%)`}},datalabels:{}}},plugins:[ChartDataLabels]});
+  document.getElementById(lid).innerHTML=labels.slice(0,8).map((l,i)=>{const p=tot?Math.round(data[i]/tot*100):0;
+    return`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:7px;min-width:0"><span style="width:9px;height:9px;border-radius:2px;background:${colors[i]};flex-shrink:0;display:inline-block"></span><span style="font-size:11px;color:var(--ts);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l}</span></div><span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--tp);flex-shrink:0">${data[i]} <span style="color:var(--tm)">(${p}%)</span></span></div>`;}).join('');
 }
 
-// ══════════════════════════════════════════
-//  DEDUPLICATE BY LATEST PAYROLL MONTH
-//  For demographic charts — each employee
-//  should only be counted once using their
-//  most recent payroll month entry
-// ══════════════════════════════════════════
-function dedupeByLatestMonth(rows) {
-  const MONTH_NUM = { Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',
-                      Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12' };
-  const latest = {};
-  rows.forEach(r => {
-    const empNo = (r['Employee No'] || '').trim();
-    if (!empNo) return; // skip blank Employee No rows
-    const { year, month } = parsePayrollMonth(r['Payroll Month']);
-    if (!year || !month) return;
-    const key = `${year}-${MONTH_NUM[month] || '00'}`;
-    if (!latest[empNo] || key > latest[empNo].key) {
-      latest[empNo] = { key, row: r };
-    }
-  });
-  return Object.values(latest).map(x => x.row);
-}
-
-function buildNatFlags(dedupedRows) {
-  // Receives already-deduplicated employee rows from applyFilters
-  // so this count always matches the Active Headcount KPI exactly
-  const groups  = groupBy(dedupedRows, 'Nationality Description');
-  const sorted  = Object.entries(groups).sort((a,b) => b[1].length - a[1].length);
-  const total   = dedupedRows.length;
-
-  const grid = document.getElementById('nat-flags-grid');
-  if (!grid) return;
-
-  if (!sorted.length) {
-    grid.innerHTML = '<p class="text-xs text-gray-400 col-span-2">No nationality data available.</p>';
-    return;
-  }
-
-  const cols = sorted.length <= 2 ? 1 : sorted.length <= 4 ? 2 : sorted.length <= 6 ? 3 : 4;
-  grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-
-  grid.innerHTML = sorted.map(([name, rows]) => {
-    const count    = rows.length;
-    const pct      = total ? Math.round(count / total * 100) : 0;
-    const meta     = getNatMeta(name);
-    const darkBg   = isDark ? 'rgba(255,255,255,0.04)' : meta.bg;
-    const borderC  = isDark ? 'rgba(255,255,255,0.08)' : meta.color + '33';
-    const textC    = isDark ? '#e2e8f0' : '#374151';
-    const numC     = isDark ? '#f1f5f9' : meta.color;
-    const subC     = isDark ? '#94a3b8' : '#9ca3af';
-    const trackC   = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
-
-    return `<div style="background:${darkBg};border:1px solid ${borderC};border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:7px;">
-      <div style="display:flex;align-items:center;gap:9px;">
-        ${flagImg(meta.code, name)}
-        <span style="font-size:11px;font-weight:500;color:${textC};line-height:1.3;word-break:break-word">${name}</span>
-      </div>
-      <div style="display:flex;align-items:baseline;gap:5px;">
-        <span style="font-size:20px;font-weight:600;font-family:'DM Mono',monospace;color:${numC};line-height:1">${count}</span>
-        <span style="font-size:10px;color:${subC};font-family:'DM Mono',monospace">(${pct}%)</span>
-      </div>
-      <div style="height:3px;border-radius:99px;background:${trackC};">
-        <div style="height:100%;width:${pct}%;border-radius:99px;background:${meta.color};transition:width .4s ease;"></div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function buildDonut(canvasId, legendId, dedupedRows, colName, palette) {
-  // Receives already-deduplicated employee rows from applyFilters
-  const groups  = groupBy(dedupedRows, colName);
-  const sorted  = Object.entries(groups).sort((a,b)=>b[1].length-a[1].length);
-  const labels  = sorted.map(([k])=>k);
-  const data    = sorted.map(([,v])=>v.length);
-  const colors  = labels.map((_,i)=>palette[i%palette.length]);
-  const total   = data.reduce((a,b)=>a+b,0);
-
-  const ctx = document.getElementById(canvasId).getContext('2d');
-  if (CHARTS[canvasId]) CHARTS[canvasId].destroy();
-
-  CHARTS[canvasId] = new Chart(ctx, {
-    type: 'doughnut',
-    data: { labels, datasets: [{
-      data, backgroundColor: colors,
-      borderWidth: 2,
-      borderColor: '#18181C',
-      hoverOffset: 6,
-      datalabels: {
-        display: ctx => {
-          // Only show label if segment is big enough to read
-          const pct = total ? ctx.dataset.data[ctx.dataIndex] / total * 100 : 0;
-          return pct >= 5;
-        },
-        color: '#ffffff',
-        font: { size: 9, weight: '600', family: 'DM Mono' },
-        formatter: (v) => {
-          const pct = total ? Math.round(v/total*100) : 0;
-          return pct + '%';
-        },
-        textAlign: 'center'
-      }
-    }]},
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: '62%',
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: isDark ? '#1e293b' : '#fff',
-          borderColor: isDark ? '#334155' : '#e5e7eb',
-          borderWidth: 1,
-          titleColor: isDark ? '#e2e8f0' : '#111827',
-          bodyColor: isDark ? '#94a3b8' : '#6b7280',
-          callbacks: { label: c => ` ${c.label}: ${c.raw} (${total?Math.round(c.raw/total*100):0}%)` }
-        },
-        datalabels: {}
-      }
-    },
-    plugins: [ChartDataLabels]
-  });
-
-  document.getElementById(legendId).innerHTML = labels.slice(0,8).map((l,i) => {
-    const pct = total ? Math.round(data[i]/total*100) : 0;
-    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-      <div style="display:flex;align-items:center;gap:7px;min-width:0">
-        <span style="width:9px;height:9px;border-radius:2px;background:${colors[i]};flex-shrink:0;display:inline-block"></span>
-        <span style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l}</span>
-      </div>
-      <span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--text-primary);flex-shrink:0">${data[i]} <span style="color:var(--text-muted)">(${pct}%)</span></span>
-    </div>`;
-  }).join('');
-}
-
-
-// ══════════════════════════════════════════
-//  DEBUG PANEL
-// ══════════════════════════════════════════
-function toggleDebug() {
-  const p = document.getElementById('debug-panel');
-  p.classList.toggle('hidden');
-  if (!p.classList.contains('hidden')) populateDebug();
-}
-
-function populateDebug() {
-  if (!RAW.hc.length) return;
-  const sampleRow = RAW.hc[0];
-  const headers   = Object.keys(sampleRow);
-  const costEl = document.getElementById('debug-cost-col');
-  if (costEl) costEl.textContent = COST_COL;
-
-  // Show unrecognised Payroll Month values
-  const unrecognised = [...new Set(
-    RAW.hc.map(r => r['Payroll Month'])
-          .filter(v => {
-            if (!v) return false;
-            const { year, month } = parsePayrollMonth(v);
-            return !year || !month;
-          })
-  )].slice(0, 10);
-
-  const debugExtra = document.getElementById('debug-unrecognised');
-  if (debugExtra) {
-    debugExtra.innerHTML = unrecognised.length
-      ? `<p style="color:#f87171;margin-bottom:6px">⚠️ Unrecognised Payroll Month formats (${unrecognised.length} unique values — these rows are EXCLUDED from charts):</p>` +
-        unrecognised.map(v => `<div style="color:#fca5a5">"${v}"</div>`).join('')
-      : `<p style="color:#6ee7b7">✅ All Payroll Month values parsed successfully</p>`;
-  }
-
-  // Show all headers with index
-  document.getElementById('debug-hc-headers').innerHTML = headers.map((h, i) =>
-    `<div class="flex gap-2"><span class="text-slate-500 w-6 text-right">${i}</span><span class="${h===COST_COL?'text-emerald-400 font-bold':''}${h==='Sum'&&h!==COST_COL?' text-amber-400':''}">${h}${h===COST_COL?' ← cost column':''}</span></div>`
-  ).join('');
-
-  // Show exit file headers + sample
-  const exitEl = document.getElementById('debug-exit-headers');
-  if (exitEl && RAW.exits.length) {
-    const exitSample = RAW.exits[0];
-    const exitHeaders = Object.keys(exitSample);
-    const DATE_COLS = ['Payroll Month','Date Resigned','Resignation Date','Exit Date','Date Joined'];
-    exitEl.innerHTML = exitHeaders.map((h, i) => {
-      const val = exitSample[h] || '(empty)';
-      const isDate = DATE_COLS.includes(h);
-      return `<div style="display:flex;gap:8px"><span style="color:var(--text-muted);width:20px;text-align:right">${i}</span><span style="color:${isDate?'#C9A84C':'inherit'}">${h}${isDate?' ← date':''}: <span style="color:#7DD3C8">${val}</span></span></div>`;
-    }).join('');
-  } else if (exitEl) {
-    exitEl.innerHTML = '<span style="color:#f87171">No exit data loaded</span>';
-  }
-
-  // Show hire file headers + sample
-  const hireEl = document.getElementById('debug-hire-headers');
-  if (hireEl && RAW.hires.length) {
-    const hireSample = RAW.hires[0];
-    const hireHeaders = Object.keys(hireSample);
-    const DATE_COLS = ['Payroll Month','Date Joined','Join Date','Hire Date','Date Hired'];
-    hireEl.innerHTML = hireHeaders.map((h, i) => {
-      const val = hireSample[h] || '(empty)';
-      const isDate = DATE_COLS.includes(h);
-      return `<div style="display:flex;gap:8px"><span style="color:var(--text-muted);width:20px;text-align:right">${i}</span><span style="color:${isDate?'#C9A84C':'inherit'}">${h}${isDate?' ← date':''}: <span style="color:#7DD3C8">${val}</span></span></div>`;
-    }).join('');
-  } else if (hireEl) {
-    hireEl.innerHTML = '<span style="color:#f87171">No hire data loaded</span>';
-  }
-}
-
-// ══════════════════════════════════════════
-//  AUTO-DETECT COST COLUMN
-//  Tries 'Sum' first, then falls back to
-//  scanning for the first numeric-looking column
-// ══════════════════════════════════════════
-function detectCostColumn(rows) {
-  if (!rows.length) return 'Sum';
-  const candidates = ['Sum', 'sum', 'Total', 'Total Cost', 'Payroll Amount',
-                      'Invoice Amount', 'Current Basic Salary', 'Amount'];
-  const headers = Object.keys(rows[0]);
-
-  // 1. Try exact match from candidates list
-  for (const c of candidates) {
-    if (headers.includes(c)) {
-      const sample = rows.slice(0, 10).filter(r => toNum(r[c]) > 0);
-      if (sample.length > 0) { console.log('Cost column detected:', c); return c; }
-    }
-  }
-
-  // 2. Fall back: find first column where most values are numeric > 0
-  for (const h of headers) {
-    const nums = rows.slice(0, 20).filter(r => toNum(r[h]) > 100); // >100 to skip flags/codes
-    if (nums.length >= 5) { console.log('Cost column auto-detected:', h); return h; }
-  }
-
-  return 'Sum'; // last resort
-}
-
-
-// ══════════════════════════════════════════
-//  BOOT
-// ══════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', async () => {
-  // Always fetch on first load (initial data)
-  await fetchAllSheets();
-  markSyncedToday();
-  // Schedule future syncs at 6am KL daily
-  scheduleNextSync();
-});
-</script>
+function setSS(state){const d=document.getElementById('sdot'),l=document.getElementById('slbl');if(state==='live'){d.style.background='#C9A84C';l.textContent='Live';}else if(state==='sync'){d.style.background='#E8903A';l.textContent='Syncing…';}else{d.style.background='#ef4444';l.textContent='Error';}}
+function showErr(msg){const b=document.getElementById('errbanner'),m=document.getElementById('errmsg');if(b&&m){m.textContent=msg;b.style.display='flex';}}
 </body>
 </html>
